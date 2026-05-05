@@ -1,0 +1,15 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="38" fill="#005bbf"/>
+  <rect width="192" height="192" rx="38" fill="url(#g)"/>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a73e8"/>
+      <stop offset="100%" stop-color="#004493"/>
+    </linearGradient>
+  </defs>
+  <!-- Heart + pulse icon -->
+  <path d="M96 140 C60 112, 36 88, 36 68 C36 52, 48 40, 64 40 C76 40, 86 48, 96 60 C106 48, 116 40, 128 40 C144 40, 156 52, 156 68 C156 88, 132 112, 96 140Z" fill="white" opacity="0.95"/>
+  <path d="M56 96 L70 96 L78 80 L88 114 L98 70 L108 108 L116 96 L136 96" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6" transform="translate(0, 12)"/>
+  <!-- V letter -->
+  <text x="96" y="175" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="rgba(255,255,255,0.7)" letter-spacing="3">VITALS</text>
+</svg>
