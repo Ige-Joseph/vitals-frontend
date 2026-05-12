@@ -44,11 +44,15 @@ export function ProfilePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.375rem'
           }}>
-            {user?.email?.[0]?.toUpperCase() ?? 'V'}
+            {user?.firstName?.[0]?.toUpperCase() ??
+            user?.email?.[0]?.toUpperCase() ??
+            'V'}
           </div>
           <div>
             <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', color: 'var(--on-surface)' }}>
-              {user?.email?.split('@')[0] ?? 'User'}
+              {user?.firstName ??
+              user?.email?.split('@')[0] ??
+              'User'}
             </p>
             <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '0.25rem' }}>{user?.email}</p>
             <div style={{ display: 'flex', gap: '0.375rem' }}>

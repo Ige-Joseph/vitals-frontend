@@ -84,11 +84,15 @@ export function AppShell() {
             background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'white', fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.8125rem', flexShrink: 0
           }}>
-            {user?.email?.[0]?.toUpperCase() ?? 'V'}
+            {user?.firstName?.[0]?.toUpperCase() ??
+            user?.email?.[0]?.toUpperCase() ??
+            'V'}
           </div>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user?.email?.split('@')[0] ?? 'User'}
+              {user?.firstName ??
+              user?.email?.split('@')[0] ??
+              'User'}
             </p>
             <p style={{ fontSize: '0.6875rem', color: 'var(--outline)', textTransform: 'capitalize' }}>{user?.planType?.toLowerCase() ?? 'free'} plan</p>
           </div>
