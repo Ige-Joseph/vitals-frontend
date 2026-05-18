@@ -5,6 +5,9 @@ import { useAuthStore } from '@/store/auth.store'
 // Auth pages
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 
 // App pages
 import { AppShell } from '@/components/layout/AppShell'
@@ -21,6 +24,8 @@ import { AdminUsersPage } from '@/admin/pages/AdminUsersPage'
 import { AdminArticlesPage } from '@/admin/pages/AdminArticlesPage'
 import { AdminSymptomsPage } from '@/admin/pages/AdminSymptomsPage'
 import { AdminDrugsPage } from '@/admin/pages/AdminDrugsPage'
+
+
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated } = useAuthStore()
@@ -76,7 +81,10 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<RequireGuest><LoginPage /></RequireGuest>} />
         <Route path="/signup" element={<RequireGuest><SignupPage /></RequireGuest>} />
-
+        <Route path="/forgot-password" element={<RequireGuest><ForgotPasswordPage /></RequireGuest>} />
+        <Route path="/reset-password" element={<RequireGuest><ResetPasswordPage /></RequireGuest>} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        
         <Route path="/" element={<RequireAuth><AppShell /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />

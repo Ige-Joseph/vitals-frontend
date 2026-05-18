@@ -35,19 +35,20 @@ async function request<T>(
       headers['Authorization'] = `Bearer ${getToken()}`
       const retry = await fetch(`${API_URL}${path}`, { ...options, headers })
       const retryData: ApiResponse<T> = await retry.json()
-      if (retryData.success && retryData.data !== null) return retryData.data
+      if (retryData.success) return retryData.data as T
     }
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
-    window.location.href = '/login'
+    
     throw new ApiError('Session expired', 'UNAUTHORIZED', 401)
   }
 
   const data: ApiResponse<T> = await res.json()
-  if (!data.success || data.data === null) {
+  if (!data.success) {
     throw new ApiError(data.message, data.errorCode, res.status)
   }
-  return data.data
+
+  return data.data as T
 }
 
 async function tryRefresh(): Promise<boolean> {
@@ -78,10 +79,11 @@ async function upload<T>(path: string, formData: FormData): Promise<T> {
     body: formData,
   })
   const data: ApiResponse<T> = await res.json()
-  if (!data.success || data.data === null) {
+  if (!data.success) {
     throw new ApiError(data.message, data.errorCode, res.status)
   }
-  return data.data
+  return data.data as T
+  
 }
 
 export const api = {

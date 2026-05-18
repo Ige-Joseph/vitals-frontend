@@ -41,8 +41,25 @@ export function LoginPage() {
 
         {/* Logo */}
         <div style={{ position: 'absolute', top: '2.5rem', left: '2.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="material-symbols-outlined icon-filled" style={{ color: 'white', fontSize: 22 }}>health_and_safety</span>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden'
+          }}>
+            <img
+              src="/icons/icon-192x192.png"
+              alt="Vitals logo"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+              }}
+            />
           </div>
           <span style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.25rem', color: 'white' }}>Vitals</span>
         </div>
@@ -85,8 +102,21 @@ export function LoginPage() {
         <div style={{ width: '100%', maxWidth: 400 }} className="animate-fade-up">
           {/* Mobile logo */}
           <div className="auth-mobile-logo" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '2rem', justifyContent: 'center' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="material-symbols-outlined icon-filled" style={{ color: 'white', fontSize: 20 }}>health_and_safety</span>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              overflow: 'hidden'
+            }}>
+              <img
+                src="/icons/icon-192x192.png"
+                alt="Vitals logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
             <span style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.25rem', color: 'var(--primary)' }}>Vitals</span>
           </div>
@@ -127,7 +157,7 @@ export function LoginPage() {
             />
 
             <div style={{ textAlign: 'right', marginTop: '-0.25rem' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</span>
+              <Link to="/forgot-password" style={{ fontSize: '0.875rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600 }}>Forgot password?</Link>
             </div>
 
             <Button type="submit" size="lg" loading={isLoading} style={{ marginTop: '0.5rem', width: '100%' }}>

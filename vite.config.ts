@@ -24,8 +24,18 @@ export default defineConfig({
         // SVG icons are placeholders — replace with PNG when you have real assets.
         // Required for full install: 192x192.png and 512x512.png (maskable).
         icons: [
-          { src: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-          { src: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
         ],
         shortcuts: [
           { name: 'Dashboard', url: '/dashboard', icons: [{ src: '/icons/icon-192x192.svg', sizes: '192x192' }] },
