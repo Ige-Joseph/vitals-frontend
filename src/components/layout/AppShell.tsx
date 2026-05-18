@@ -61,11 +61,24 @@ export function AppShell() {
       }} className="sidebar-desktop">
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0 0.5rem', marginBottom: '1.75rem' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-lg)',
-            background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <span className="material-symbols-outlined icon-sm" style={{ color: 'white' }}>health_and_safety</span>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/icons/icon-192x192.png"
+              alt="Vitals logo"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
           </div>
           <div>
             <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)', letterSpacing: '-0.02em' }}>Vitals</h1>
@@ -129,8 +142,24 @@ export function AppShell() {
           padding: '0 1rem', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'white' }}>health_and_safety</span>
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                overflow: 'hidden',
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src="/icons/icon-192x192.png"
+                alt="Vitals logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                }}
+              />
             </div>
             <span style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1rem', color: 'var(--primary)' }}>Vitals</span>
           </div>

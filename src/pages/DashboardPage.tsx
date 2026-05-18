@@ -179,7 +179,7 @@ export function DashboardPage() {
 
     const interval = setInterval(() => {
       load(true)
-    }, 30000)
+    }, 120000)
 
     return () => clearInterval(interval)
   }, [])
