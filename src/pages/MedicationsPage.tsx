@@ -6,10 +6,6 @@ import { MedicationCard } from '@/components/medications/MedicationCard'
 import { AddMedicationModal } from '@/components/medications/AddMedicationModal'
 
 
-
-
-
-
 /* ── Medications page ───────────────────────────── */
 // `embedded` prop kept for backwards compat when used inside MyCarePage tabs
 export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
@@ -31,7 +27,7 @@ export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
           .map(m => m.carePlan.id)
       )
 
-      const currentRemoved = removedIds // 👈 stabilize reference
+      const currentRemoved = removedIds // stabilize reference
 
       return data
         .filter(m => !currentRemoved.has(m.carePlan.id))
@@ -72,9 +68,13 @@ export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
     }
   }
 
-  const handleAddSuccess = () => {
+  const handleAddSuccess = (calendarSynced?: boolean) => {
     setAdding(false)
-    setSuccess('Medication plan created — reminders have been scheduled.')
+    setSuccess(
+      calendarSynced
+        ? 'Medication plan created and synced to Google Calendar.'
+        : 'Medication plan created successfully.'
+    )
     load()
     const t = setTimeout(() => setSuccess(''), 5000)
     return () => clearTimeout(t)

@@ -12,7 +12,7 @@ export function AddMedicationModal({
   onSuccess,
   onCancel,
 }: {
-  onSuccess: () => void
+  onSuccess: (calendarSynced?: boolean) => void
   onCancel: () => void
 }) {
   const { requestPermissionAndRegister, pushState } = usePushNotifications()
@@ -115,7 +115,7 @@ export function AddMedicationModal({
     }
 
     try {
-      await api.post('/api/v1/medications', {
+      const result = await api.post<any>('/api/v1/medications', {
         name: form.name.trim(),
         dosage: form.dosage.trim(),
         frequency: form.frequency,
@@ -126,7 +126,24 @@ export function AddMedicationModal({
         aiDraftId: aiDraftId ?? undefined,
       })
 
-      onSuccess()
+      const carePlanId = result?.carePlan?.id
+
+      let calendarSynced = false
+
+      if (carePlanId) {
+        try {
+          const syncResult = await api.post<any>(
+            `/api/v1/calendar/care-plans/${carePlanId}/sync`,
+            {},
+          )
+
+          calendarSynced = syncResult?.synced > 0 && syncResult?.failed === 0
+        } catch {
+          calendarSynced = false
+        }
+      }
+
+      onSuccess(calendarSynced)
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -308,7 +325,7 @@ export function AddMedicationModal({
                 lineHeight: 1.55,
               }}
             >
-              After saving, we’ll ask for notification permission so you can receive reminders at each dose time.
+              After saving, we'll ask for notification permission so you can receive reminders at each dose time.
             </p>
           </div>
 
@@ -345,7 +362,7 @@ export function AddMedicationModal({
                   lineHeight: 1.55,
                 }}
               >
-                “{aiTranscript}”
+                "{aiTranscript}"
               </p>
             </div>
           )}

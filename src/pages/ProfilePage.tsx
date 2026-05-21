@@ -1,12 +1,45 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { api } from '@/lib/api'
 import { Card, Button, Badge, StatusBanner } from '@/components/ui'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
+
+
 interface Usage {
   symptomChecks: { used: number; limit: number }
   drugDetections: { used: number; limit: number }
+}
+
+interface CalendarSyncSummary {
+  connected: boolean
+  failedSyncs: number
+  accountEmail?: string | null
+}
+
+interface UserProfile {
+  firstName?: string
+  lastName?: string
+  email?: string
+  profile?: {
+    gender?: string
+    country?: string
+    city?: string
+    phoneNumber?: string
+    dateOfBirth?: string
+    bloodGroup?: string
+    genotype?: string
+    heightCm?: number
+    weightKg?: number
+    allergies?: string[]
+    existingConditions?: string[]
+    currentMedications?: string[]
+    disabilities?: string[]
+    smokingStatus?: string
+    alcoholUse?: string
+    timezone?: string
+    selectedJourney?: string
+  }
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -333,30 +366,31 @@ const prettyDate = (iso: string) => {
 
 type FormValues = Record<string, string>
 
-const TOTAL_PROFILE_FIELDS = 17
+const COMPLETION_FIELDS = [
+  'firstName',
+  'lastName',
+  'gender',
+  'country',
+  'city',
+  'phoneNumber',
+  'dateOfBirth',
+  'bloodGroup',
+  'genotype',
+  'heightCm',
+  'weightKg',
+  'allergies',
+  'existingConditions',
+  'currentMedications',
+  'disabilities',
+  'smokingStatus',
+  'alcoholUse',
+] as const
 
 const calcCompletion = (form: FormValues) => {
-  const fields = [
-    form.firstName,
-    form.lastName,
-    form.gender,
-    form.country,
-    form.city,
-    form.phoneNumber,
-    form.dateOfBirth,
-    form.bloodGroup,
-    form.genotype,
-    form.heightCm,
-    form.weightKg,
-    form.allergies,
-    form.existingConditions,
-    form.currentMedications,
-    form.disabilities,
-    form.smokingStatus,
-    form.alcoholUse,
-  ]
-  const filled = fields.filter(v => String(v ?? '').trim() !== '').length
-  return Math.round((filled / TOTAL_PROFILE_FIELDS) * 100)
+  const filled = COMPLETION_FIELDS.filter(
+    key => String(form[key] ?? '').trim() !== ''
+  ).length
+  return Math.round((filled / COMPLETION_FIELDS.length) * 100)
 }
 
 export function ProfilePage() {
@@ -364,10 +398,19 @@ export function ProfilePage() {
   const { pushState, requestPermissionAndRegister } = usePushNotifications()
   const [usage, setUsage] = useState<Usage | null>(null)
 
+  // ── Google Calendar state ──────────────────────────────────────────────────
+  const [calendarSummary, setCalendarSummary] = useState<CalendarSyncSummary | null>(null)
+  const [isRetryingSync, setIsRetryingSync] = useState(false)
+
+  // derived — calendarSummary is the single source of truth
+  const calendarConnected = calendarSummary?.connected ?? false
+  const failedSyncs = calendarSummary?.failedSyncs ?? 0
+
   const [openSections, setOpenSections] = useState({
     medical: false,
     lifestyle: false,
     notifications: false,
+    calendar: false,
     usage: false,
   })
 
@@ -379,6 +422,8 @@ export function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isSendingVerification, setIsSendingVerification] = useState(false)
   const [isVerificationCooldown, setIsVerificationCooldown] = useState(false)
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isConnectingCalendar, setIsConnectingCalendar] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
 
@@ -429,8 +474,8 @@ export function ProfilePage() {
 
   useEffect(() => {
     api
-      .get<any>('/api/v1/users/profile')
-      .then(r => {
+      .get<UserProfile>('/api/v1/users/profile')
+      .then((r: UserProfile) => {
         setForm({
           firstName: r.firstName ?? '',
           lastName: r.lastName ?? '',
@@ -463,11 +508,54 @@ export function ProfilePage() {
           api.patch('/api/v1/users/profile', { timezone: detected }).catch(() => {})
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setError('Could not load your profile. Please refresh.')
+      })
       .finally(() => setIsLoadingProfile(false))
 
-    api.get<Usage>('/api/v1/usage').then(setUsage).catch(() => {})
+    api.get<Usage>('/api/v1/usage').then(setUsage).catch(() => {
+      // non-fatal: usage section simply won't render
+    })
+
+    // ── Google Calendar: handle OAuth redirect & fetch sync summary ──────────
+    const params = new URLSearchParams(window.location.search)
+
+    const calendarRedirect = params.get('calendar') === 'connected'
+    if (calendarRedirect) {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('calendar')
+      window.history.replaceState({}, '', url.toString())
+    }
+
+    api
+      .get<CalendarSyncSummary>('/api/v1/calendar/sync/summary')
+      .then((data) => {
+        setCalendarSummary(data)
+        // show banner only once backend confirms the connection landed
+        if (calendarRedirect && data.connected) {
+          setSuccess('Google Calendar connected successfully')
+          setOpenSections(prev => ({ ...prev, calendar: true }))
+        }
+      })
+      .catch(() => {
+        // non-fatal: calendar section degrades gracefully if summary fails
+      })
   }, [])
+
+  // clean up cooldown timer if component unmounts mid-countdown
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current)
+    }
+  }, [])
+
+  const completion = useMemo(() => calcCompletion(form), [form])
+
+  const completionColor = completion === 100
+    ? '#16a34a'
+    : completion >= 60
+    ? 'var(--primary)'
+    : 'var(--tertiary)'
 
   if (isLoadingProfile) {
     return (
@@ -516,14 +604,6 @@ export function ProfilePage() {
     )
   }
 
-  const completion = calcCompletion(form)
-
-  const completionColor = completion === 100
-    ? '#16a34a'
-    : completion >= 60
-    ? 'var(--primary)'
-    : 'var(--tertiary)'
-
   const handleSave = async () => {
     setIsSaving(true)
     setError('')
@@ -569,11 +649,25 @@ export function ProfilePage() {
       await api.post<null>('/api/v1/auth/resend-verification', {})
       setSuccess('Verification email sent successfully.')
       setIsVerificationCooldown(true)
-      setTimeout(() => setIsVerificationCooldown(false), 60_000)
+      cooldownTimerRef.current = setTimeout(() => setIsVerificationCooldown(false), 60_000)
     } catch {
       setError('Could not send verification email.')
     } finally {
       setIsSendingVerification(false)
+    }
+  }
+
+  const handleConnectGoogleCalendar = async () => {
+    setIsConnectingCalendar(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const result = await api.get<{ url: string }>('/api/v1/calendar/google/connect')
+      window.location.href = result.url
+    } catch {
+      setError('Could not start Google Calendar connection.')
+      setIsConnectingCalendar(false)
     }
   }
 
@@ -812,7 +906,7 @@ export function ProfilePage() {
             {completion === 100
               ? 'Your health profile is complete.'
               : (() => {
-                  const remaining = TOTAL_PROFILE_FIELDS - Math.round(completion / 100 * TOTAL_PROFILE_FIELDS)
+                  const remaining = COMPLETION_FIELDS.length - Math.round(completion / 100 * COMPLETION_FIELDS.length)
                   return `${remaining} field${remaining === 1 ? '' : 's'} remaining — a complete profile helps Vitals give better insights.`
                 })()}
           </p>
@@ -899,6 +993,160 @@ export function ProfilePage() {
             />
           </div>
         )}
+      </CollapsibleCard>
+
+      {/* Google Calendar */}
+      <CollapsibleCard
+        title="Google Calendar"
+        open={openSections.calendar}
+        onToggle={() => toggleSection('calendar')}
+        className="animate-fade-up delay-250"
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '0.875rem',
+              background: calendarConnected ? '#dcfce7' : 'var(--primary-fixed)',
+              borderRadius: 'var(--radius-xl)',
+            }}
+          >
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <span
+                className="material-symbols-outlined icon-sm icon-filled"
+                style={{ color: calendarConnected ? '#16a34a' : 'var(--primary)' }}
+              >
+                {calendarConnected ? 'check_circle' : 'event'}
+              </span>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-headline)',
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  color: calendarConnected ? '#166534' : 'var(--primary)',
+                }}
+              >
+                {calendarConnected ? 'Google Calendar connected' : 'Sync care reminders'}
+              </p>
+              <p
+                style={{
+                  fontSize: '0.8125rem',
+                  opacity: 0.85,
+                  marginTop: '0.125rem',
+                  color: calendarConnected ? '#166534' : 'var(--primary)',
+                }}
+              >
+                {calendarConnected
+                  ? 'Your care reminders can now sync with Google Calendar.'
+                  : 'Connect Google Calendar so medication and pregnancy reminders can sync automatically.'}
+              </p>
+
+             {calendarSummary?.accountEmail && (
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    marginTop: '0.25rem',
+                    color: calendarConnected ? '#166534' : 'var(--primary)',
+                    opacity: 0.85,
+                  }}
+                >
+                  Connected as {calendarSummary.accountEmail}
+                </p>
+              )}
+            </div>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleConnectGoogleCalendar}
+              disabled={isConnectingCalendar}
+              icon={isConnectingCalendar ? 'hourglass_top' : calendarConnected ? 'sync' : 'link'}
+            >
+              {isConnectingCalendar
+                ? 'Connecting…'
+                : calendarConnected
+                ? 'Reconnect'
+                : 'Connect'}
+            </Button>
+          </div>
+
+          {failedSyncs > 0 && (
+            <div
+              style={{
+                padding: '1rem',
+                borderRadius: 'var(--radius-xl)',
+                background: 'var(--error-container)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    color: 'var(--error)',
+                  }}
+                >
+                  Some calendar events failed to sync
+                </p>
+                <p
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--error)',
+                    marginTop: '0.25rem',
+                  }}
+                >
+                  Failed syncs: {failedSyncs}
+                </p>
+              </div>
+
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={isRetryingSync}
+                onClick={async () => {
+                  try {
+                    setIsRetryingSync(true)
+                    await api.post<null>('/api/v1/calendar/sync/retry-failed', {})
+                    setSuccess('Retry started successfully')
+                    const updated = await api.get<CalendarSyncSummary>('/api/v1/calendar/sync/summary')
+                    setCalendarSummary(updated)
+                    // calendarConnected is derived from calendarSummary — no manual sync needed
+                  } catch {
+                    setError('Could not retry failed syncs')
+                  } finally {
+                    setIsRetryingSync(false)
+                  }
+                }}
+              >
+                {isRetryingSync ? 'Retrying…' : 'Retry failed syncs'}
+              </Button>
+            </div>
+          )}
+        </div>
       </CollapsibleCard>
 
       {/* Usage */}

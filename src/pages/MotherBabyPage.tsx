@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '@/lib/api'
 import { Button, Card, Badge, EmptyState, Skeleton, StatusBanner, Input } from '@/components/ui'
@@ -495,6 +496,8 @@ function BabyTab() {
   const [plans, setPlans] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [resettingBaby, setResettingBaby] = useState(false)         // ← baby reset loader
+  const [showBabyResetModal, setShowBabyResetModal] = useState(false) // ← baby reset modal
 
   useEffect(() => {
     api.get<any[]>('/api/v1/mother-baby/baby-profile')
@@ -503,29 +506,85 @@ function BabyTab() {
       .finally(() => setLoading(false))
   }, [])
 
+  const handleBabyReset = async () => {
+    try {
+      setResettingBaby(true)
+      await api.patch('/api/v1/mother-baby/baby-profile/cancel', {})
+      setPlans([])
+      setShowForm(true)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setResettingBaby(false)
+      setShowBabyResetModal(false)
+    }
+  }
+
   if (loading) {
     return <Skeleton height={200} />
   }
 
   if (plans.length === 0 || showForm) {
     return <BabySetupForm onSuccess={(plan) => {
-    setPlans([plan])
-    setShowForm(false)
+      setPlans([plan])
+      setShowForm(false)
     }} />
   }
 
-    return <BabyTimeline 
-    plan={plans[0]} 
-    onReset={async () => {
-      try {
-        await api.patch('/api/v1/mother-baby/baby-profile/cancel', {})
-        setPlans([])
-        setShowForm(true)
-      } catch (err) {
-        console.error(err)
-      }
-    }} 
-  />
+  return (
+    <>
+      <BabyTimeline
+        plan={plans[0]}
+        onReset={() => setShowBabyResetModal(true)}
+      />
+
+      {/* Baby reset confirmation modal */}
+      {showBabyResetModal &&
+        ReactDOM.createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '1rem',
+            }}
+          >
+            <Card
+              style={{
+                padding: '1.5rem',
+                width: '90%',
+                maxWidth: 400,
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+            >
+              <h3 style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, marginBottom: '0.5rem' }}>
+                Reset baby timeline?
+              </h3>
+
+              <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>
+                This will clear the current vaccination schedule. You can create a new one afterwards.
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <Button variant="ghost" onClick={() => setShowBabyResetModal(false)} disabled={resettingBaby}>
+                  Cancel
+                </Button>
+
+                <Button variant="danger" onClick={handleBabyReset} loading={resettingBaby} disabled={resettingBaby}>
+                  Reset
+                </Button>
+              </div>
+            </Card>
+          </div>,
+          document.body,
+        )}
+    </>
+  )
 }
 
 function BabySetupForm({ onSuccess }: { onSuccess: (data: any) => void }) {
@@ -702,7 +761,7 @@ function BabyTimeline({ plan, onReset }: { plan: any; onReset: () => void }){
                   </p>
 
                   <p style={{ fontSize: '0.8125rem', color: 'var(--outline)', marginTop: '0.5rem' }}>
-                    Tip: Keep your baby’s immunization card updated after this visit.
+                    Tip: Keep your baby's immunization card updated after this visit.
                   </p>
                 </div>
               </div>
@@ -746,6 +805,7 @@ export function MotherBabyPage() {
   const [success, setSuccess] = useState('')
   const timeoutRef = useRef<number | null>(null)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [resetting, setResetting] = useState(false)                 // ← pregnancy reset loader
   
 
   useEffect(() => {
@@ -777,10 +837,9 @@ export function MotherBabyPage() {
     { id: 'baby',     label: 'Baby',     icon: 'child_care'     },
   ]
 
-
-
   const handleConfirmReset = async () => {
     try {
+      setResetting(true)
       await api.patch('/api/v1/mother-baby/pregnancy/cancel', {})
       setTimelineState({ status: 'setup' })
       setSuccess('Pregnancy timeline reset. You can set it up again when ready.')
@@ -792,6 +851,7 @@ export function MotherBabyPage() {
     } catch (err) {
       console.error(err)
     } finally {
+      setResetting(false)
       setShowResetModal(false)
     }
   }
@@ -867,45 +927,51 @@ export function MotherBabyPage() {
       </div>
 
 
-          {showResetModal && (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.4)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}>
-        <Card style={{ padding: '1.5rem', width: '90%', maxWidth: 400 }}>
-          <h3 style={{
-            fontFamily: 'var(--font-headline)',
-            fontWeight: 700,
-            marginBottom: '0.5rem'
-          }}>
-            Reset pregnancy timeline?
-          </h3>
+      {/* Pregnancy reset confirmation modal */}
+      {showResetModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <Card style={{ padding: '1.5rem', width: '90%', maxWidth: 400 }}>
+            <h3 style={{
+              fontFamily: 'var(--font-headline)',
+              fontWeight: 700,
+              marginBottom: '0.5rem'
+            }}>
+              Reset pregnancy timeline?
+            </h3>
 
-          <p style={{
-            fontSize: '0.875rem',
-            color: 'var(--on-surface-variant)',
-            marginBottom: '1.25rem'
-          }}>
-            This will clear your current pregnancy timeline. You can set it up again afterwards.
-          </p>
+            <p style={{
+              fontSize: '0.875rem',
+              color: 'var(--on-surface-variant)',
+              marginBottom: '1.25rem'
+            }}>
+              This will clear your current pregnancy timeline. You can set it up again afterwards.
+            </p>
 
-          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setShowResetModal(false)}>
-              Cancel
-            </Button>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+              <Button variant="ghost" onClick={() => setShowResetModal(false)} disabled={resetting}>
+                Cancel
+              </Button>
 
-            <Button variant="danger" onClick={handleConfirmReset}>
-              Reset
-            </Button>
-          </div>
-        </Card>
-      </div>
-    )}
+              <Button
+                variant="danger"
+                onClick={handleConfirmReset}
+                loading={resetting}
+                disabled={resetting}
+              >
+                Reset
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
