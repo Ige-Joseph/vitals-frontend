@@ -1009,71 +1009,89 @@ export function ProfilePage() {
             gap: '1rem',
           }}
         >
+          {/* ── responsive calendar card (mobile-safe) ── */}
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: 'column',
               gap: '1rem',
-              padding: '0.875rem',
+              padding: '1rem',
               background: calendarConnected ? '#dcfce7' : 'var(--primary-fixed)',
               borderRadius: 'var(--radius-xl)',
             }}
           >
             <div
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.5)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                gap: '0.875rem',
+                alignItems: 'flex-start',
               }}
             >
-              <span
-                className="material-symbols-outlined icon-sm icon-filled"
-                style={{ color: calendarConnected ? '#16a34a' : 'var(--primary)' }}
-              >
-                {calendarConnected ? 'check_circle' : 'event'}
-              </span>
-            </div>
-
-            <div style={{ flex: 1 }}>
-              <p
+              <div
                 style={{
-                  fontFamily: 'var(--font-headline)',
-                  fontWeight: 700,
-                  fontSize: '0.9rem',
-                  color: calendarConnected ? '#166534' : 'var(--primary)',
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
-                {calendarConnected ? 'Google Calendar connected' : 'Sync care reminders'}
-              </p>
-              <p
-                style={{
-                  fontSize: '0.8125rem',
-                  opacity: 0.85,
-                  marginTop: '0.125rem',
-                  color: calendarConnected ? '#166534' : 'var(--primary)',
-                }}
-              >
-                {calendarConnected
-                  ? 'Your care reminders can now sync with Google Calendar.'
-                  : 'Connect Google Calendar so medication and pregnancy reminders can sync automatically.'}
-              </p>
-
-             {calendarSummary?.accountEmail && (
-                <p
+                <span
+                  className="material-symbols-outlined icon-sm icon-filled"
                   style={{
-                    fontSize: '0.75rem',
-                    marginTop: '0.25rem',
-                    color: calendarConnected ? '#166534' : 'var(--primary)',
-                    opacity: 0.85,
+                    color: calendarConnected ? '#16a34a' : 'var(--primary)',
                   }}
                 >
-                  Connected as {calendarSummary.accountEmail}
+                  {calendarConnected ? 'check_circle' : 'event'}
+                </span>
+              </div>
+
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-headline)',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    color: calendarConnected ? '#166534' : 'var(--primary)',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {calendarConnected
+                    ? 'Google Calendar connected'
+                    : 'Sync care reminders'}
                 </p>
-              )}
+
+                <p
+                  style={{
+                    fontSize: '0.8125rem',
+                    opacity: 0.85,
+                    marginTop: '0.25rem',
+                    color: calendarConnected ? '#166534' : 'var(--primary)',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {calendarConnected
+                    ? 'Your care reminders can now sync with Google Calendar.'
+                    : 'Connect Google Calendar so medication and pregnancy reminders can sync automatically.'}
+                </p>
+
+                {calendarSummary?.accountEmail && (
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      marginTop: '0.5rem',
+                      color: calendarConnected ? '#166534' : 'var(--primary)',
+                      opacity: 0.85,
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    Connected as {calendarSummary.accountEmail}
+                  </p>
+                )}
+              </div>
             </div>
 
             <Button
@@ -1081,7 +1099,17 @@ export function ProfilePage() {
               size="sm"
               onClick={handleConnectGoogleCalendar}
               disabled={isConnectingCalendar}
-              icon={isConnectingCalendar ? 'hourglass_top' : calendarConnected ? 'sync' : 'link'}
+              icon={
+                isConnectingCalendar
+                  ? 'hourglass_top'
+                  : calendarConnected
+                  ? 'sync'
+                  : 'link'
+              }
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+              }}
             >
               {isConnectingCalendar
                 ? 'Connecting…'
