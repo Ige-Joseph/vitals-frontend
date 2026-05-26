@@ -29,18 +29,22 @@ async function request<T>(
   const res = await fetch(`${API_URL}${path}`, { ...options, headers })
 
   // Handle token expiry
-  if (res.status === 401) {
+  const isLoginRequest = path.includes('/auth/login')
+
+  if (res.status === 401 && !isLoginRequest) {
     const refreshed = await tryRefresh()
+
     if (refreshed) {
       headers['Authorization'] = `Bearer ${getToken()}`
       const retry = await fetch(`${API_URL}${path}`, { ...options, headers })
       const retryData: ApiResponse<T> = await retry.json()
       if (retryData.success) return retryData.data as T
     }
+
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
-    
-    throw new ApiError('Session expired', 'UNAUTHORIZED', 401)
+
+    throw new ApiError('Session expired. Please log in again.', 'UNAUTHORIZED', 401)
   }
 
   const data: ApiResponse<T> = await res.json()
