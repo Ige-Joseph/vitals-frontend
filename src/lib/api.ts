@@ -4,7 +4,16 @@ import {
   setAccessToken,
 } from '@/lib/session'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+/**
+ * Empty in production so requests stay same-origin and Vercel proxies `/api/*`
+ * to the API (see the rewrite in vercel.json). Same-origin keeps the refresh
+ * cookie first-party, which is what Safari requires — it blocks third-party
+ * cookies outright, so calling the API host directly would drop the session on
+ * every reload. Setting VITE_API_URL overrides this and calls the API host
+ * directly, which is only safe when both share a registrable domain.
+ */
+const API_URL = import.meta.env.VITE_API_URL
+  ?? (import.meta.env.DEV ? 'http://localhost:3000' : '')
 const AUTH_TRANSPORT_HEADER = 'X-Auth-Transport'
 
 const COOKIE_AUTH_PATHS = new Set([
