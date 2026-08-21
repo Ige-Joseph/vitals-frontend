@@ -205,7 +205,6 @@ export function DashboardPage() {
 
   const displayName = user?.firstName ?? user?.email?.split('@')[0] ?? 'there'
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  console.log(user)
   if (loading) return <SkeletonDashboard />
 
   if (error) return (

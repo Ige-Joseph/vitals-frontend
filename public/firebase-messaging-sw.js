@@ -40,8 +40,6 @@ const messaging = firebase.messaging();
  * Use this handler to customise the notification or perform background work.
  */
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw] Background message received:', payload);
-
   const { title = 'Vitals', body = 'You have a new notification' } =
     payload.notification ?? {};
 
@@ -60,21 +58,37 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url ?? '/';
+  const fallbackUrl = new URL('/dashboard', self.location.origin);
+  let targetUrl = fallbackUrl;
+
+  try {
+    const candidate = new URL(event.notification.data?.url ?? '/dashboard', self.location.origin);
+    if (
+      candidate.origin === self.location.origin &&
+      (candidate.protocol === 'https:' || candidate.protocol === 'http:')
+    ) {
+      targetUrl = candidate;
+    }
+  } catch {
+    targetUrl = fallbackUrl;
+  }
 
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // If app is already open, focus it and navigate
+        // Reuse an existing application tab when possible.
         for (const client of clientList) {
-          if (client.url === targetUrl && 'focus' in client) {
+          if (new URL(client.url).origin === self.location.origin && 'focus' in client) {
+            if ('navigate' in client) {
+              return client.navigate(targetUrl.href).then(() => client.focus());
+            }
             return client.focus();
           }
         }
-        // Otherwise open a new tab
+
         if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
+          return clients.openWindow(targetUrl.href);
         }
       }),
   );

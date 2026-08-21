@@ -1,6 +1,10 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import { api } from '@/lib/api'
+import {
+  clearAccessToken,
+  consumeLegacyRefreshToken,
+  setAccessToken,
+} from '@/lib/session'
 
 export interface User {
   id: string
@@ -21,10 +25,13 @@ export interface SignupPayload {
   country?: string
 }
 
+interface AuthResult {
+  user: User
+  accessToken: string
+}
+
 interface AuthState {
   user: User | null
-  accessToken: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
   hasHydrated: boolean
@@ -33,133 +40,74 @@ interface AuthState {
   signup: (payload: SignupPayload) => Promise<void>
   logout: () => Promise<void>
   hydrateUser: () => Promise<void>
+  clearSession: () => void
   setUser: (user: User) => void
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
-      isLoading: false,
-      hasHydrated: false,
+const unauthenticatedState = {
+  user: null,
+  isAuthenticated: false,
+} as const
 
-      login: async (email, password) => {
-        set({ isLoading: true })
-        try {
-          const data = await api.post<{ user: User; accessToken: string; refreshToken: string }>(
-            '/api/v1/auth/login',
-            { email, password }
-          )
+export const useAuthStore = create<AuthState>((set) => ({
+  ...unauthenticatedState,
+  isLoading: false,
+  hasHydrated: false,
 
-          localStorage.setItem('accessToken', data.accessToken)
-          localStorage.setItem('refreshToken', data.refreshToken)
-
-          set({
-            user: data.user,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            isAuthenticated: true,
-          })
-        } finally {
-          set({ isLoading: false })
-        }
-      },
-
-      signup: async (payload) => {
-        set({ isLoading: true })
-        try {
-          const data = await api.post<{ user: User; accessToken: string; refreshToken: string }>(
-            '/api/v1/auth/signup',
-            payload
-          )
-
-          localStorage.setItem('accessToken', data.accessToken)
-          localStorage.setItem('refreshToken', data.refreshToken)
-
-          set({
-            user: data.user,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            isAuthenticated: true,
-          })
-        } finally {
-          set({ isLoading: false })
-        }
-      },
-
-      hydrateUser: async () => {
-        const token = localStorage.getItem('accessToken')
-
-        if (!token) {
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            hasHydrated: true,
-          })
-          return
-        }
-
-        try {
-          const user = await api.get<User>('/api/v1/auth/me')
-
-          set({
-            user,
-            accessToken: localStorage.getItem('accessToken'),
-            refreshToken: localStorage.getItem('refreshToken'),
-            isAuthenticated: true,
-            hasHydrated: true,
-          })
-        } catch {
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
-
-          set({
-            user: null,
-            accessToken: null,
-            refreshToken: null,
-            isAuthenticated: false,
-            hasHydrated: true,
-          })
-        }
-      },
-
-      logout: async () => {
-        const { refreshToken } = get()
-
-        if (refreshToken) {
-          try {
-            await api.post('/api/v1/auth/logout', { refreshToken })
-          } catch {
-            // silent logout
-          }
-        }
-
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
-
-        set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        })
-      },
-
-      setUser: (user) => set({ user, isAuthenticated: true }),
-    }),
-    {
-      name: 'vitals-auth',
-      partialize: (s) => ({
-        user: s.user,
-        accessToken: s.accessToken,
-        refreshToken: s.refreshToken,
-        isAuthenticated: s.isAuthenticated,
-      }),
+  login: async (email, password) => {
+    set({ isLoading: true })
+    try {
+      const data = await api.post<AuthResult>('/api/v1/auth/login', { email, password })
+      setAccessToken(data.accessToken)
+      set({ user: data.user, isAuthenticated: true })
+    } finally {
+      set({ isLoading: false })
     }
-  )
-)
+  },
+
+  signup: async (payload) => {
+    set({ isLoading: true })
+    try {
+      const data = await api.post<AuthResult>('/api/v1/auth/signup', payload)
+      setAccessToken(data.accessToken)
+      set({ user: data.user, isAuthenticated: true })
+    } finally {
+      set({ isLoading: false })
+    }
+  },
+
+  hydrateUser: async () => {
+    const legacyRefreshToken = consumeLegacyRefreshToken()
+    const session = await api.refreshSession<User>(legacyRefreshToken)
+
+    if (session) {
+      set({
+        user: session.user,
+        isAuthenticated: true,
+        hasHydrated: true,
+      })
+      return
+    }
+
+    clearAccessToken()
+    set({ ...unauthenticatedState, hasHydrated: true })
+  },
+
+  logout: async () => {
+    try {
+      await api.post('/api/v1/auth/logout')
+    } catch {
+      // Local logout must still complete when the API is unavailable.
+    } finally {
+      clearAccessToken()
+      set(unauthenticatedState)
+    }
+  },
+
+  clearSession: () => {
+    clearAccessToken()
+    set(unauthenticatedState)
+  },
+
+  setUser: (user) => set({ user, isAuthenticated: true }),
+}))

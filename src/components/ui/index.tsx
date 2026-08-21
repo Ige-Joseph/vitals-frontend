@@ -108,11 +108,17 @@ export const Badge = ({ variant = 'neutral', children }: { variant?: BadgeVarian
 }
 
 // ─── Card ────────────────────────────────────────────────────
-export const Card = ({ children, style, onClick, className }: {
-  children: React.ReactNode; style?: React.CSSProperties
-  onClick?: () => void; className?: string
-}) => (
+export const Card = ({
+  children,
+  style,
+  onClick,
+  className,
+  onMouseEnter,
+  onMouseLeave,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
   <div
+    {...props}
     className={className}
     onClick={onClick}
     style={{
@@ -122,8 +128,20 @@ export const Card = ({ children, style, onClick, className }: {
       transition: onClick ? 'transform 0.15s, box-shadow 0.15s' : undefined,
       ...style
     }}
-    onMouseEnter={onClick ? (e) => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-lg)' } : undefined}
-    onMouseLeave={onClick ? (e) => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-md)' } : undefined}
+    onMouseEnter={(event) => {
+      if (onClick) {
+        event.currentTarget.style.transform = 'translateY(-2px)'
+        event.currentTarget.style.boxShadow = 'var(--shadow-lg)'
+      }
+      onMouseEnter?.(event)
+    }}
+    onMouseLeave={(event) => {
+      if (onClick) {
+        event.currentTarget.style.transform = ''
+        event.currentTarget.style.boxShadow = 'var(--shadow-md)'
+      }
+      onMouseLeave?.(event)
+    }}
   >{children}</div>
 )
 

@@ -8,6 +8,32 @@ interface Article {
 }
 interface ArticleDetail extends Article { content: string }
 
+const ARTICLE_BOLD_PATTERN = /(\*\*.*?\*\*)/g
+
+/**
+ * Render the small Markdown subset supported by the article editor without
+ * inserting HTML into the document. React escapes every text node, so article
+ * content cannot execute scripts or event handlers.
+ */
+function ArticleContent({ content }: { content: string }) {
+  const lines = content.split('\n')
+
+  return (
+    <div style={{ fontSize: '0.9375rem', color: 'var(--on-surface)', lineHeight: 1.75 }}>
+      {lines.map((line, lineIndex) => (
+        <React.Fragment key={lineIndex}>
+          {line.split(ARTICLE_BOLD_PATTERN).map((part, partIndex) =>
+            part.startsWith('**') && part.endsWith('**') && part.length > 4
+              ? <strong key={partIndex}>{part.slice(2, -2)}</strong>
+              : <React.Fragment key={partIndex}>{part}</React.Fragment>
+          )}
+          {lineIndex < lines.length - 1 ? <br /> : null}
+        </React.Fragment>
+      ))}
+    </div>
+  )
+}
+
 const CATEGORIES = ['ALL', 'PREGNANCY', 'BABY_CARE', 'MEDICATION', 'NUTRITION', 'MENTAL_HEALTH']
 const CAT_LABELS: Record<string, string> = {
   ALL:'All', PREGNANCY:'Pregnancy', BABY_CARE:'Baby Care',
@@ -102,9 +128,7 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
             <div style={{ padding: '1.5rem' }}>
               <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.375rem', color: 'var(--on-surface)', lineHeight: 1.3, marginBottom: '0.625rem' }}>{article.title}</h1>
               <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic', marginBottom: '1.5rem' }}>{article.excerpt}</p>
-              <div style={{ fontSize: '0.9375rem', color: 'var(--on-surface)', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}
-                dangerouslySetInnerHTML={{ __html: article.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }}
-              />
+              <ArticleContent content={article.content} />
               {article.publishedAt && (
                 <p style={{ marginTop: '2rem', fontSize: '0.8125rem', color: 'var(--outline)', borderTop: '1px solid var(--outline-variant)', paddingTop: '1rem' }}>
                   Published {new Date(article.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
+import { SESSION_EXPIRED_EVENT } from '@/lib/session'
 
 // Auth pages
 import { LoginPage } from '@/pages/LoginPage'
@@ -12,10 +13,10 @@ import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 // App pages
 import { AppShell } from '@/components/layout/AppShell'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { MyCarePage } from '@/pages/MyCarePage'
-import { MotherBabyPage } from '@/pages/MotherBabyPage'
+import { MyCarePage } from '@/pages/my-care/MyCarePage'
+import { MotherBabyPage } from '@/pages/mother-baby/MotherBabyPage'
 import { ArticlesPage } from '@/pages/ArticlesPage'
-import { ProfilePage } from '@/pages/ProfilePage'
+import { ProfilePage } from '@/pages/profile/ProfilePage'
 
 // Admin pages
 import { AdminShell } from '@/admin/layout/AdminShell'
@@ -71,10 +72,17 @@ function RequireGuest({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const hydrateUser = useAuthStore((s) => s.hydrateUser)
+  const clearSession = useAuthStore((s) => s.clearSession)
 
   useEffect(() => {
-    hydrateUser()
+    void hydrateUser()
   }, [hydrateUser])
+
+  useEffect(() => {
+    const handleSessionExpired = () => clearSession()
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired)
+  }, [clearSession])
 
   return (
     <BrowserRouter>

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { getToken, onMessage } from 'firebase/messaging'
 import { getFirebaseMessaging } from '@/lib/firebase'
 import { api } from '@/lib/api'
+import { toSafeAppPath } from '@/lib/browser-security'
 import { useAuthStore } from '@/store/auth.store'
 
 export type PushState =
@@ -48,9 +49,6 @@ export function usePushNotifications() {
 
       await registration.update()
 
-      console.log('[push] SW registration:', registration)
-      console.log('[push] VAPID exists:', !!VAPID_KEY, VAPID_KEY?.slice(0, 10))
-
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: registration,
@@ -84,8 +82,8 @@ export function usePushNotifications() {
         const note = new Notification(title, { body, icon: '/icons/icon-192x192.png' })
         note.onclick = () => {
           window.focus()
-          const url = (payload as any).fcmOptions?.link
-          if (url) window.location.href = url
+          const link = (payload as { fcmOptions?: { link?: string } }).fcmOptions?.link
+          window.location.assign(toSafeAppPath(link))
           note.close()
         }
       }
