@@ -57,7 +57,6 @@ export function AppShell() {
         height: '100dvh', position: 'sticky', top: 0,
         display: 'flex', flexDirection: 'column', padding: '1.25rem 0.875rem',
         gap: '0.25rem', overflowY: 'auto',
-        ['@media (max-width: 768px)' as any]: { display: 'none' }
       }} className="sidebar-desktop">
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0 0.5rem', marginBottom: '1.75rem' }}>
