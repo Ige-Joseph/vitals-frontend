@@ -1,16 +1,21 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, Input, StatusBanner } from '@/components/ui'
 import { ApiError } from '@/lib/api'
+import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton'
 
 export function LoginPage() {
   const { login, isLoading } = useAuthStore()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [params] = useSearchParams()
+  const [email, setEmail] = useState(params.get('email') ?? '')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const notice = params.get('notice') === 'email_exists'
+    ? 'You already have a Vitals account with this email address. Sign in with your password to continue.'
+    : ''
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,7 +131,11 @@ export function LoginPage() {
             Sign in to continue your health journey.
           </p>
 
+          {notice && !error && <div style={{ marginBottom: '1.25rem' }}><StatusBanner type="info" message={notice} /></div>}
           {error && <div style={{ marginBottom: '1.25rem' }}><StatusBanner type="error" message={error} /></div>}
+
+          <GoogleButton onError={setError} />
+          <AuthDivider />
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <Input

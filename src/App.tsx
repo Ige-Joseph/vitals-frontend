@@ -10,6 +10,8 @@ import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { BillingPage } from '@/pages/BillingPage'
+import { GoogleCallbackPage } from '@/pages/GoogleCallbackPage'
+import { CompleteProfilePage } from '@/pages/CompleteProfilePage'
 
 // App pages
 import { AppShell } from '@/components/layout/AppShell'
@@ -93,6 +95,8 @@ export default function App() {
         <Route path="/forgot-password" element={<RequireGuest><ForgotPasswordPage /></RequireGuest>} />
         <Route path="/reset-password" element={<RequireGuest><ResetPasswordPage /></RequireGuest>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/auth/google" element={<GoogleCallbackPage />} />
+        <Route path="/complete-profile" element={<RequireAuth><CompleteProfilePage /></RequireAuth>} />
         <Route path="/billing" element={<BillingPage />} />
         
         <Route path="/" element={<RequireAuth><AppShell /></RequireAuth>}>
