@@ -4,6 +4,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { ProfileDetails } from './ProfileDetails'
+import { FamilySection } from './FamilySection'
 import { ProfilePageSkeleton } from './ProfileControls'
 import {
   CalendarSettings,
@@ -35,6 +36,7 @@ export function ProfilePage() {
   const [usage, setUsage] = useState<Usage | null>(null)
   const [calendarSummary, setCalendarSummary] = useState<CalendarSyncSummary | null>(null)
   const [openSections, setOpenSections] = useState(CLOSED_PROFILE_SECTIONS)
+  const [tab, setTab] = useState<'me' | 'family'>('me')
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -176,6 +178,29 @@ export function ProfilePage() {
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>Profile</h1>
       </div>
 
+      <div role="tablist" aria-label="Profile sections" className="animate-fade-up" style={{
+        display: 'flex', gap: '0.25rem', padding: '0.25rem',
+        background: 'var(--surface-container-low)', borderRadius: 'var(--radius-full)',
+      }}>
+        {([['me', 'My Profile', 'account_circle'], ['family', 'Family', 'family_restroom']] as const).map(
+          ([id, label, icon]) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: '0.4rem', padding: '0.55rem 0.75rem', cursor: 'pointer',
+              border: 'none', borderRadius: 'var(--radius-full)',
+              background: tab === id ? 'var(--surface-container-lowest)' : 'transparent',
+              color: tab === id ? 'var(--primary)' : 'var(--on-surface-variant)',
+              fontFamily: 'var(--font-headline)', fontWeight: tab === id ? 700 : 500,
+              fontSize: '0.85rem', boxShadow: tab === id ? 'var(--elevation-1)' : 'none',
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 19 }}>{icon}</span>
+              {label}
+            </button>
+          ),
+        )}
+      </div>
+
+      {tab === 'family' ? <FamilySection /> : <>
       <UserSummaryCard
         user={user}
         sendingVerification={isSendingVerification}
@@ -228,6 +253,7 @@ export function ProfilePage() {
           <Button type="button" variant="primary" onClick={startEditing} style={{ width: '100%' }} icon="edit">Edit profile</Button>
         </div>
       )}
+      </>}
 
       <div className="animate-fade-up">
         <Button variant="danger" onClick={logout} style={{ width: '100%' }} icon="logout">Sign out</Button>

@@ -9,10 +9,34 @@ export interface CalendarSyncSummary {
   accountEmail?: string | null
 }
 
+/** Canonical clinical attributes served for a Person. */
+export interface PersonHealth {
+  personId?: string
+  bloodGroup?: string | null
+  genotype?: string | null
+  heightCm?: number | null
+  weightKg?: number | null
+  allergies?: string[]
+  existingConditions?: string[]
+  currentMedications?: string[]
+  disabilities?: string[]
+  smokingStatus?: string | null
+  alcoholUse?: string | null
+}
+
+/** Canonical demographics for the account's own Person. */
+export interface PersonBlock {
+  personId: string
+  displayName: string
+  dateOfBirth?: string | null
+  gender?: string | null
+}
+
 export interface UserProfile {
   firstName?: string
   lastName?: string
   email?: string
+  /** Clinical keys in profile are compatibility mirrors; prefer health/person. */
   profile?: {
     gender?: string
     country?: string
@@ -32,6 +56,8 @@ export interface UserProfile {
     timezone?: string
     selectedJourney?: string
   }
+  health?: PersonHealth
+  person?: PersonBlock | null
 }
 
 export interface ProfileForm {

@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert'
 import { test } from 'node:test'
-import { formatDate } from './profile.utils.ts'
+import { formatDate, profileToForm } from './profile.utils.ts'
 
 const formatLocalDate = (date: Date) => date.toLocaleDateString(undefined, {
   day: 'numeric',
@@ -28,4 +28,24 @@ test('full timestamps continue to parse as instants', () => {
   const timestamp = '2026-08-26T00:30:00.000Z'
 
   assert.equal(formatDate(timestamp), formatLocalDate(new Date(timestamp)))
+})
+
+test('profile form prefers canonical Person demographics and health data', () => {
+  const form = profileToForm({
+    firstName: 'Ada',
+    person: {
+      personId: 'person-1',
+      displayName: 'Ada Lovelace',
+      dateOfBirth: '1990-01-01T00:00:00.000Z',
+      gender: 'FEMALE',
+    },
+    health: { bloodGroup: 'O+', allergies: ['Pollen'] },
+    profile: { gender: 'MALE', dateOfBirth: '1980-02-03', bloodGroup: 'A+' },
+  })
+
+  assert.equal(form.firstName, 'Ada')
+  assert.equal(form.gender, 'FEMALE')
+  assert.equal(form.dateOfBirth, '1990-01-01')
+  assert.equal(form.bloodGroup, 'O+')
+  assert.equal(form.allergies, 'Pollen')
 })

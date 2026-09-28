@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { api, ApiError } from '@/lib/api'
 import { Card, Badge, Skeleton, EmptyState, Button } from '@/components/ui'
@@ -11,6 +11,40 @@ interface DashboardData {
   usageSummary: UsageSummary
   latestMoodInsight: MoodLog | null
   motherBabySummary?: unknown
+  subject: PersonSubject
+  people: PersonSummary[]
+}
+
+interface DashboardResponse {
+  subject: PersonSubject
+  care: Pick<DashboardData, 'todayTasks' | 'upcomingReminders' | 'recentActivity' | 'latestMoodInsight'> & {
+    journey: unknown
+  }
+  account: { usageSummary: UsageSummary }
+  people: PersonSummary[]
+}
+
+interface PersonSubject {
+  personId: string
+  displayName: string
+  isSelf: boolean
+}
+
+interface PersonSummary {
+  personId: string
+  displayName: string
+  relationship: 'self' | 'managed' | 'connected'
+  isClaimed: boolean
+  origin: string
+  role: string
+  isSelected: boolean
+  upcomingTasks: number
+}
+
+const RELATIONSHIP_ICON: Record<PersonSummary['relationship'], string> = {
+  self: 'person',
+  managed: 'child_care',
+  connected: 'group',
 }
 
 interface CareEvent {
@@ -25,6 +59,55 @@ interface UsageSummary {
   drugDetectionsLimit: number
 }
 interface MoodLog { mood: string | null; craving: string | null; insight: string | null; loggedAt: string }
+
+function PersonSwitcher({
+  people,
+  subject,
+  onSelect,
+}: {
+  people: PersonSummary[]
+  subject: PersonSubject
+  onSelect: (personId: string | undefined) => void
+}) {
+  if (people.length <= 1) return null
+
+  return (
+    <div role="tablist" aria-label="Viewing health record for" style={{
+      display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem',
+      marginBottom: '1.25rem',
+    }}>
+      {people.map(person => {
+        const active = person.personId === subject.personId
+        return (
+          <button
+            key={person.personId}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onSelect(person.relationship === 'self' ? undefined : person.personId)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.5rem 0.875rem', borderRadius: 'var(--radius-full)',
+              border: `1px solid ${active ? 'var(--primary)' : 'var(--outline-variant)'}`,
+              background: active ? 'var(--primary-fixed)' : 'var(--surface-container-lowest)',
+              color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
+              fontFamily: 'var(--font-headline)', fontWeight: active ? 700 : 500,
+              fontSize: '0.85rem', whiteSpace: 'nowrap', cursor: 'pointer',
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+              {RELATIONSHIP_ICON[person.relationship]}
+            </span>
+            {person.displayName}
+            {person.upcomingTasks > 0 && <span aria-label={`${person.upcomingTasks} upcoming tasks`}>
+              {person.upcomingTasks}
+            </span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 const GREETING = () => {
   const h = new Date().getHours()
@@ -152,19 +235,37 @@ function SkeletonDashboard() {
 
 export function DashboardPage() {
   const { user } = useAuthStore()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedPersonId = searchParams.get('personId') || undefined
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const nav = useNavigate()
 
+  const selectPerson = (personId: string | undefined) => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (personId) next.set('personId', personId)
+      else next.delete('personId')
+      return next
+    }, { replace: true })
+  }
+
   
-  const load = async (silent = false) => {
+  const load = async (silent = false, personId = selectedPersonId) => {
     if (!silent) setLoading(true)
     setError('')
 
     try {
-      const d = await api.get<DashboardData>('/api/v1/dashboard')
-      setData(d)
+      const query = personId ? `?personId=${encodeURIComponent(personId)}` : ''
+      const response = await api.get<DashboardResponse>(`/api/v1/dashboard${query}`)
+      setData({
+        ...response.care,
+        usageSummary: response.account.usageSummary,
+        motherBabySummary: response.care.journey,
+        subject: response.subject,
+        people: response.people,
+      })
     } catch (e) {
       if (!silent) {
         setError(e instanceof ApiError ? e.message : 'Failed to load dashboard')
@@ -182,7 +283,7 @@ export function DashboardPage() {
     }, 120000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedPersonId])
 
   const updateEventStatus = async (id: string, status: 'DONE' | 'SKIPPED') => {
     setData(prev => {
@@ -224,10 +325,13 @@ export function DashboardPage() {
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 900, margin: '0 auto' }}>
 
       {/* Header */}
+      {data && <PersonSwitcher people={data.people} subject={data.subject} onSelect={selectPerson} />}
       <div className="animate-fade-up" style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--outline)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{today}</p>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--on-surface)', lineHeight: 1.2 }}>
-          {GREETING()}, <span style={{ color: 'var(--primary)' }}>{displayName}</span> 👋
+          {data && !data.subject.isSelf
+            ? <><span style={{ color: 'var(--primary)' }}>{data.subject.displayName}</span>'s care</>
+            : <>{GREETING()}, <span style={{ color: 'var(--primary)' }}>{displayName}</span> 👋</>}
         </h1>
         {pendingCount > 0 && (
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
