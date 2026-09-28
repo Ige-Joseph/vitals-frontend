@@ -137,10 +137,19 @@ export const formatSmoking = (value: string) => formatValue(DISPLAY_VALUES.smoki
 export const formatAlcohol = (value: string) => formatValue(DISPLAY_VALUES.alcohol, value)
 export const formatJourney = (value: string) => formatValue(DISPLAY_VALUES.journey, value)
 
+/** `YYYY-MM-DD` and nothing else — a calendar date with no time and no zone. */
+const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+
 export const formatDate = (iso: string): string | undefined => {
   if (!iso) return undefined
-  const date = new Date(iso)
+
+  const parts = DATE_ONLY.exec(iso)
+  const date = parts
+    ? new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]))
+    : new Date(iso)
+
   if (Number.isNaN(date.getTime())) return iso
+
   return date.toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'long',
