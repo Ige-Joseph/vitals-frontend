@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
-import { EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
 import { PersonProfile } from './PersonProfile'
+import { InviteModal } from '@/components/family/InviteModal'
+import { PendingInvitations } from '@/components/family/PendingInvitations'
+import type {
+  ReceivedInvitation,
+  SentInvitation,
+} from '@/components/family/invitation.types'
 
 /**
  * Family lives inside Profile, not as a sixth navigation item.
@@ -184,16 +190,51 @@ export function FamilySection() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
+  const [received, setReceived] = useState<ReceivedInvitation[]>([])
+  const [sent, setSent] = useState<SentInvitation[]>([])
+  const [inviting, setInviting] = useState(false)
+  const [withdrawing, setWithdrawing] = useState<string | null>(null)
+  const [responding, setResponding] = useState<string | null>(null)
   const { user } = useAuthStore()
 
   const load = async () => {
     try {
-      const [list, cap] = await Promise.all([
+      const [list, cap, mine] = await Promise.all([
         api.get<PersonListEntry[]>('/api/v1/persons'),
         api.get<Capacity>('/api/v1/persons/capacity'),
+        api.get<ReceivedInvitation[]>('/api/v1/invitations'),
       ])
       setPeople(list)
       setCapacity(cap)
+      setReceived(mine)
+
+      // Offers this account has made, gathered per record.
+      //
+      // The API answers per Person and there is no account-wide equivalent, so
+      // this fans out over the records the caller manages. That set is small
+      // by construction — it is bounded by the managed-Person ceiling — and
+      // one failing record must not blank the whole panel, so each is settled
+      // independently and the failures are simply absent.
+      const manageable = list.filter(p => p.role === 'OWNER')
+      const results = await Promise.allSettled(
+        manageable.map(person =>
+          api
+            .get<Omit<SentInvitation, 'personId' | 'recordName'>[]>(
+              `/api/v1/persons/${person.personId}/invitations`,
+            )
+            .then(rows =>
+              rows.map(row => ({
+                ...row,
+                personId: person.personId,
+                recordName: person.displayName,
+              })),
+            ),
+        ),
+      )
+
+      setSent(
+        results.flatMap(r => (r.status === 'fulfilled' ? r.value : [])),
+      )
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Could not load your family')
       setPeople([])
@@ -208,6 +249,82 @@ export function FamilySection() {
    * End your own membership. Requires no permission from the owner — they can
    * revoke you, and this is the same right in the other direction.
    */
+  /**
+   * Answer an offer from the list, without going back to the email.
+   *
+   * Only connect and decline. Taking ownership ends somebody else's access and
+   * is followed by a question about whether to restore it — that belongs on
+   * the decision screen, which a claimable row links to instead.
+   */
+  const respondToInvitation = async (
+    invitation: ReceivedInvitation,
+    mode: 'connect' | 'decline',
+  ) => {
+    if (mode === 'decline') {
+      const confirmed = window.confirm(
+        `Decline the invitation to ${invitation.recordName}'s record?
+
+` +
+          `${invitation.inviterName} can invite you again if you change your mind.`,
+      )
+      if (!confirmed) return
+    }
+
+    setResponding(invitation.invitationId)
+    setError('')
+    setSuccess('')
+
+    try {
+      await api.post(
+        `/api/v1/invitations/by-id/${invitation.invitationId}/respond`,
+        { mode },
+      )
+      setSuccess(
+        mode === 'connect'
+          ? `You now have access to ${invitation.recordName}'s record`
+          : 'Invitation declined',
+      )
+      await load()
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Could not answer that invitation')
+    } finally {
+      setResponding(null)
+    }
+  }
+
+  /**
+   * Withdraw an offer nobody has answered.
+   *
+   * Confirmed because the invitee may already be looking at the email: the
+   * link stops working the moment this runs, and there is no way to tell them
+   * why. Re-inviting is one step, so this is reversible in effect if not in
+   * fact.
+   */
+  const withdraw = async (invitation: SentInvitation) => {
+    const confirmed = window.confirm(
+      `Withdraw the invitation to ${invitation.email}?\n\n` +
+        `Their link stops working straight away. Nothing else changes, and you ` +
+        `can invite them again whenever you like.`,
+    )
+    if (!confirmed) return
+
+    setWithdrawing(invitation.id)
+    setError('')
+    setSuccess('')
+
+    try {
+      await api.delete(
+        `/api/v1/persons/${invitation.personId}/invitations/${invitation.id}`,
+      )
+      setSuccess(`Invitation to ${invitation.email} withdrawn`)
+      await load()
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Could not withdraw that invitation')
+    } finally {
+      setWithdrawing(null)
+    }
+  }
+
   const disconnect = async (person: PersonListEntry) => {
     if (!user?.id) return
 
@@ -261,10 +378,27 @@ export function FamilySection() {
   const managed = people.filter(p => !p.isSelf && !p.isClaimed)
   const connected = people.filter(p => !p.isSelf && p.isClaimed)
 
+  const canAddManaged =
+    capacity !== null && capacity.managedUsed < capacity.managedLimit
+
+  // Anything this account is OWNER of can be offered to somebody else — the
+  // account's own record included, which is the ordinary case.
+  const shareable = people.filter(p => p.role === 'OWNER')
+  const canShare = shareable.length > 0
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error ? <StatusBanner type="error" message={error} /> : null}
       {success ? <StatusBanner type="success" message={success} /> : null}
+
+      <PendingInvitations
+        received={received}
+        sent={sent}
+        onRespond={respondToInvitation}
+        respondingId={responding}
+        onWithdraw={withdraw}
+        withdrawingId={withdrawing}
+      />
 
       <Group
         title="Managed"
@@ -299,12 +433,45 @@ export function FamilySection() {
               Your first baby doesn't count towards this.
             </p>
           )}
-          {capacity.managedUsed >= capacity.managedLimit && (
+          {!canAddManaged && (
             <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>
               Upgrade to manage more people.
             </p>
           )}
+
+          {/* Sharing is not bounded by this account's ceilings.
+              Inviting somebody to a record you manage spends a slot on
+              *their* account, not yours — the API checks capacity when they
+              accept, not when you offer. So this button is not gated on
+              managedUsed, which counts something else entirely. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="person_add"
+            disabled={!canShare}
+            onClick={() => setInviting(true)}
+          >
+            Share a record
+          </Button>
+
+          {!canShare && (
+            <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>
+              You can share a record once you manage one — your own counts.
+            </p>
+          )}
         </div>
+      )}
+
+      {inviting && (
+        <InviteModal
+          people={people}
+          onSent={(recordName, email) => {
+            setInviting(false)
+            setSuccess(`Invitation to ${email} sent for ${recordName}`)
+            void load()
+          }}
+          onCancel={() => setInviting(false)}
+        />
       )}
 
       {people.length === 1 && (

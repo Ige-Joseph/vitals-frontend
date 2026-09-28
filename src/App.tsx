@@ -12,6 +12,7 @@ import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
 import { BillingPage } from '@/pages/BillingPage'
 import { GoogleCallbackPage } from '@/pages/GoogleCallbackPage'
 import { CompleteProfilePage } from '@/pages/CompleteProfilePage'
+import { InvitationPage } from '@/pages/InvitationPage'
 
 // App pages
 import { AppShell } from '@/components/layout/AppShell'
@@ -98,6 +99,8 @@ export default function App() {
         <Route path="/auth/google" element={<GoogleCallbackPage />} />
         <Route path="/complete-profile" element={<RequireAuth><CompleteProfilePage /></RequireAuth>} />
         <Route path="/billing" element={<BillingPage />} />
+        <Route path="/invitations/:token" element={<InvitationPage />} />
+        <Route path="/invitations/by-id/:invitationId" element={<RequireAuth><InvitationPage /></RequireAuth>} />
         
         <Route path="/" element={<RequireAuth><AppShell /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
