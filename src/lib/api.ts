@@ -132,6 +132,40 @@ const refreshAccessToken = async (
   return refreshPromise
 }
 
+const filenameFrom = (header: string | null): string | null => {
+  if (!header) return null
+  const encoded = header.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  if (encoded) {
+    try { return decodeURIComponent(encoded.replace(/^"|"$/g, '')) } catch { return null }
+  }
+  return header.match(/filename="?([^";]+)"?/i)?.[1] ?? null
+}
+
+async function download(path: string): Promise<{ blob: Blob; filename: string | null }> {
+  let res = await performFetch(path, {}, false)
+  if (res.status === 401 && !REFRESH_EXEMPT_PATHS.has(path)) {
+    const refreshed = await refreshAccessToken()
+    if (refreshed) res = await performFetch(path, {}, false)
+    if (res.status === 401) {
+      notifySessionExpired()
+      throw new ApiError('Session expired. Please log in again.', 'UNAUTHORIZED', 401)
+    }
+  }
+
+  if (!res.ok) {
+    let message = 'The file could not be downloaded.'
+    let errorCode: string | null = null
+    try {
+      const body = await res.json() as { message?: string; errorCode?: string }
+      message = body.message ?? message
+      errorCode = body.errorCode ?? null
+    } catch { /* non-JSON error response */ }
+    throw new ApiError(message, errorCode, res.status)
+  }
+
+  return { blob: await res.blob(), filename: filenameFrom(res.headers.get('content-disposition')) }
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -171,6 +205,7 @@ export const api = {
     method: 'POST',
     body: formData,
   }, true),
+  download,
   refreshSession: async <TUser>(legacyRefreshToken?: string) => {
     const result = await refreshAccessToken(legacyRefreshToken)
     return result as { user: TUser; accessToken: string } | null

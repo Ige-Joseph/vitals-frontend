@@ -1,6 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { CareTimeline } from '@/components/care/CareTimeline'
 import { MedicationsPage } from '@/pages/MedicationsPage'
+import { AppointmentsPage } from '@/pages/AppointmentsPage'
 import { DrugDetection } from './DrugDetection'
 import { SymptomChecker } from './SymptomChecker'
 import type { CareTab } from './my-care.types'
@@ -8,6 +9,7 @@ import type { CareTab } from './my-care.types'
 const CARE_TABS: { id: CareTab; label: string; icon: string }[] = [
   { id: 'timeline', label: 'Timeline', icon: 'event_note' },
   { id: 'medications', label: 'Medications', icon: 'pill' },
+  { id: 'appointments', label: 'Appointments', icon: 'event' },
   { id: 'symptoms', label: 'Symptom AI', icon: 'psychology' },
   { id: 'drug', label: 'Drug scan', icon: 'biotech' },
 ]
@@ -18,10 +20,12 @@ function isCareTab(value: string | null): value is CareTab {
   return value !== null && CARE_TAB_IDS.has(value as CareTab)
 }
 
-function CareTabContent({ tab }: { tab: CareTab }) {
+function CareTabContent({ tab, personId }: { tab: CareTab; personId?: string }) {
   switch (tab) {
     case 'medications':
       return <MedicationsPage embedded />
+    case 'appointments':
+      return <AppointmentsPage embedded personId={personId} />
     case 'symptoms':
       return <SymptomChecker />
     case 'drug':
@@ -38,7 +42,9 @@ export function MyCarePage() {
   const tab = isCareTab(requestedTab) ? requestedTab : 'timeline'
 
   const setTab = (nextTab: CareTab) => {
-    setSearchParams({ tab: nextTab }, { replace: true })
+    const next = new URLSearchParams(searchParams)
+    next.set('tab', nextTab)
+    setSearchParams(next, { replace: true })
   }
 
   return (
@@ -73,7 +79,7 @@ export function MyCarePage() {
       </div>
 
       <div className="animate-fade-up delay-200">
-        <CareTabContent tab={tab} />
+        <CareTabContent tab={tab} personId={searchParams.get('personId') ?? undefined} />
       </div>
 
       <style>{`.tab-label-text { display: none; } @media (min-width: 420px) { .tab-label-text { display: inline; } }`}</style>

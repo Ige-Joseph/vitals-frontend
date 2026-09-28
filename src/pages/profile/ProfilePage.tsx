@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { ProfileDetails } from './ProfileDetails'
 import { FamilySection } from './FamilySection'
 import { PlanSection } from './PlanSection'
+import { HealthSummarySection } from './HealthSummarySection'
 import { ProfilePageSkeleton } from './ProfileControls'
 import {
   CalendarSettings,
@@ -33,6 +34,7 @@ export function ProfilePage() {
   const { user, logout } = useAuthStore()
   const { pushState, requestPermissionAndRegister } = usePushNotifications()
   const [form, setForm] = useState<ProfileForm>(EMPTY_PROFILE_FORM)
+  const [personId, setPersonId] = useState<string | undefined>()
   const [snapshot, setSnapshot] = useState<ProfileForm | null>(null)
   const [usage, setUsage] = useState<Usage | null>(null)
   const [calendarSummary, setCalendarSummary] = useState<CalendarSyncSummary | null>(null)
@@ -52,6 +54,7 @@ export function ProfilePage() {
   useEffect(() => {
     api.get<UserProfile>('/api/v1/users/profile')
       .then(profile => {
+        setPersonId(profile.person?.personId)
         setForm(profileToForm(profile))
         if (!profile.profile?.timezone) {
           const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -225,6 +228,7 @@ export function ProfilePage() {
         onRetry={handleRetryCalendarSync}
       />
       <PlanSection open={openSections.plan} onToggle={() => toggleSection('plan')} />
+      <HealthSummarySection open={openSections.report} onToggle={() => toggleSection('report')} personId={personId} personName={`${form.firstName} ${form.lastName}`.trim() || undefined} />
       <UsageSettings usage={usage} open={openSections.usage} onToggle={() => toggleSection('usage')} />
 
       <ProfileDetails

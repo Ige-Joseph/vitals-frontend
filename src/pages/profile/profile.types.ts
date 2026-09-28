@@ -84,6 +84,7 @@ export interface ProfileForm {
 
 export interface OpenProfileSections {
   plan: boolean
+  report: boolean
   medical: boolean
   lifestyle: boolean
   notifications: boolean
@@ -117,6 +118,7 @@ export const EMPTY_PROFILE_FORM: ProfileForm = {
 
 export const CLOSED_PROFILE_SECTIONS: OpenProfileSections = {
   plan: false,
+  report: false,
   medical: false,
   lifestyle: false,
   notifications: false,

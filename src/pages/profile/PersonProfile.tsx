@@ -10,6 +10,7 @@ import {
   CollapsibleCard,
 } from './ProfileControls'
 import { GENDER_OPTIONS, BLOOD_GROUP_OPTIONS, GENOTYPE_OPTIONS } from './profile.utils'
+import { HealthSummarySection } from './HealthSummarySection'
 
 /**
  * One person's record, opened from Family.
@@ -113,6 +114,7 @@ export function PersonProfile({
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [openMedical, setOpenMedical] = useState(false)
+  const [openReport, setOpenReport] = useState(false)
   const [success, setSuccess] = useState('')
   const [error, setError] = useState('')
 
@@ -300,6 +302,13 @@ export function PersonProfile({
           </>
         )}
       </CollapsibleCard>
+
+      <HealthSummarySection
+        open={openReport}
+        onToggle={() => setOpenReport(open => !open)}
+        personId={person.id}
+        personName={person.displayName}
+      />
 
       {success ? <StatusBanner type="success" message={success} /> : null}
       {error ? <StatusBanner type="error" message={error} /> : null}

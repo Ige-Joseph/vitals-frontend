@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { Button, Badge, Skeleton, StatusBanner } from '@/components/ui'
+import { EntitlementSheet } from '@/admin/components/EntitlementSheet'
 
 interface AdminUser {
   id: string; email: string; role: string; planType: string
@@ -19,6 +20,7 @@ export function AdminUsersPage() {
   const [actionId, setActionId]     = useState<string | null>(null)
   const [toast, setToast]           = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [search, setSearch]         = useState('')
+  const [managing, setManaging]     = useState<AdminUser | null>(null)
 
   const load = useCallback(async (p: number) => {
     setLoading(true)
@@ -96,16 +98,20 @@ export function AdminUsersPage() {
       ) : (
         <>
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 80px 80px 110px', gap: '0.75rem', padding: '0.5rem 1rem', marginBottom: '0.375rem' }}>
-            {['Email', 'Role', 'Plan', 'Status', 'Action'].map(h => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px 80px 80px 108px 110px', gap: '0.75rem', padding: '0.5rem 1rem', marginBottom: '0.375rem' }}>
+            {['Email', 'Role', 'Plan', 'Status', 'Plan action', 'Account'].map(h => (
               <p key={h} style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--outline)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</p>
             ))}
           </div>
 
+          <p style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', padding: '0 1rem 0.75rem' }}>
+            The plan badge shows current access. Open Entitlement to see whether it comes from a paid subscription or an admin grant, and to grant or revoke access.
+          </p>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {filtered.map(user => (
               <div key={user.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 90px 80px 80px 110px',
+                display: 'grid', gridTemplateColumns: '1fr 90px 80px 80px 108px 110px',
                 gap: '0.75rem', alignItems: 'center',
                 padding: '0.875rem 1rem', background: 'var(--surface-container-lowest)',
                 borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-sm)',
@@ -128,6 +134,10 @@ export function AdminUsersPage() {
                 <Badge variant={PLAN_BADGE[user.planType as keyof typeof PLAN_BADGE] ?? 'neutral'}>{user.planType}</Badge>
                 <Badge variant={user.isActive ? 'success' : 'error'}>{user.isActive ? 'Active' : 'Inactive'}</Badge>
 
+                <Button size="sm" variant="outline" onClick={() => setManaging(user)} style={{ fontSize: '0.75rem', padding: '0.375rem 0.5rem' }}>
+                  Entitlement
+                </Button>
+
                 <Button
                   size="sm"
                   variant={user.isActive ? 'danger' : 'secondary'}
@@ -140,6 +150,16 @@ export function AdminUsersPage() {
               </div>
             ))}
           </div>
+
+          {managing && <EntitlementSheet
+            userId={managing.id}
+            email={managing.email}
+            onClose={() => setManaging(null)}
+            onChanged={tier => {
+              setUsers(current => current.map(user => user.id === managing.id ? { ...user, planType: tier } : user))
+              showToast('success', `Entitlement updated for ${managing.email}.`)
+            }}
+          />}
 
           {/* Pagination */}
           {pagination && pagination.pages > 1 && (

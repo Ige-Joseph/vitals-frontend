@@ -35,4 +35,4 @@ export interface Pagination {
   pages: number
 }
 
-export type CareTab = 'timeline' | 'medications' | 'symptoms' | 'drug'
+export type CareTab = 'timeline' | 'medications' | 'appointments' | 'symptoms' | 'drug'
