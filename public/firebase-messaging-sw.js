@@ -40,15 +40,19 @@ const messaging = firebase.messaging();
  * Use this handler to customise the notification or perform background work.
  */
 messaging.onBackgroundMessage((payload) => {
-  const { title = 'Vitals', body = 'You have a new notification' } =
-    payload.notification ?? {};
+  // FCM already displays notification payloads in the background. Display
+  // only data-only messages here to avoid showing notification payloads twice.
+  if (payload.notification) return;
+
+  const data = payload.data ?? {};
+  const { title = 'Vitals', body = 'You have a new notification' } = data;
 
   self.registration.showNotification(title, {
     body,
     icon: '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',
     // data carries the click URL — used in notificationclick handler below
-    data: { url: payload.fcmOptions?.link ?? '/' },
+    data: { url: data.url ?? payload.fcmOptions?.link ?? '/' },
   });
 });
 
