@@ -9,6 +9,7 @@ import { SignupPage } from '@/pages/SignupPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
+import { BillingPage } from '@/pages/BillingPage'
 
 // App pages
 import { AppShell } from '@/components/layout/AppShell'
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="/forgot-password" element={<RequireGuest><ForgotPasswordPage /></RequireGuest>} />
         <Route path="/reset-password" element={<RequireGuest><ResetPasswordPage /></RequireGuest>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/billing" element={<BillingPage />} />
         
         <Route path="/" element={<RequireAuth><AppShell /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />

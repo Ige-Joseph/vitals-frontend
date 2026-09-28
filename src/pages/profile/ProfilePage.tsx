@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { ProfileDetails } from './ProfileDetails'
 import { FamilySection } from './FamilySection'
+import { PlanSection } from './PlanSection'
 import { ProfilePageSkeleton } from './ProfileControls'
 import {
   CalendarSettings,
@@ -223,6 +224,7 @@ export function ProfilePage() {
         onConnect={handleConnectGoogleCalendar}
         onRetry={handleRetryCalendarSync}
       />
+      <PlanSection open={openSections.plan} onToggle={() => toggleSection('plan')} />
       <UsageSettings usage={usage} open={openSections.usage} onToggle={() => toggleSection('usage')} />
 
       <ProfileDetails
