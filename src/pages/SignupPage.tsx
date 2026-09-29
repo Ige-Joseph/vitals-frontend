@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, Input, StatusBanner } from '@/components/ui'
 import { ApiError } from '@/lib/api'
+import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton'
 
 const pwRequirements = [
   { test: (p: string) => p.length >= 8,   text: 'At least 8 characters'   },
@@ -175,6 +176,13 @@ export function SignupPage() {
           </div>
 
           {error && <div style={{ marginBottom:'1.25rem' }}><StatusBanner type="error" message={error} /></div>}
+
+          {step === 1 && (
+            <>
+              <GoogleButton label="Sign up with Google" onError={setError} />
+              <AuthDivider />
+            </>
+          )}
 
           {/* ── Step 1: personal details ── */}
           {step === 1 && (
