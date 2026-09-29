@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { api, ApiError } from '@/lib/api'
 import { Button, StatusBanner } from '@/components/ui'
+import { LockedFeature } from '@/components/billing/PremiumAccess'
+import { useBillingTier } from '@/hooks/useBillingStatus'
 import { CollapsibleCard, Field, Input } from './ProfileControls'
 import { formatDate } from './profile.utils'
 
@@ -65,33 +67,12 @@ export function HealthSummarySection({
   personName?: string
 }) {
   const [range, setRange] = useState(defaultRange)
-  const [isPremium, setIsPremium] = useState<boolean | null>(null)
+  const { tier, loading: checkingPlan, error: planError, reload: reloadPlan } = useBillingTier()
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   /** What the worker is doing, while it is doing it. */
   const [progress, setProgress] = useState('')
-
-  // Entitlement is an account fact, so this asks regardless of whose record is
-  // being summarised.
-  useEffect(() => {
-    let cancelled = false
-
-    api
-      .get<{ tier: 'FREE' | 'PREMIUM' }>('/api/v1/billing/plan')
-      .then(plan => {
-        if (!cancelled) setIsPremium(plan.tier === 'PREMIUM')
-      })
-      .catch(() => {
-        // Unknown rather than assumed. The button stays disabled and says why
-        // it could not tell, instead of promising something that will 403.
-        if (!cancelled) setIsPremium(null)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const setBound = (key: 'from' | 'to', value: string) =>
     setRange(current => ({ ...current, [key]: value }))
@@ -197,11 +178,28 @@ export function HealthSummarySection({
   }
 
   const whose = personName ? `${personName}’s` : 'your'
-  const blocked = isPremium !== true
 
   return (
     <CollapsibleCard title="Health summary" open={open} onToggle={onToggle}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {tier === 'FREE' ? (
+          <LockedFeature
+            title="Health summary"
+            description="Premium lets you generate a downloadable PDF summary of recorded medications, doses, appointments, symptoms and mood."
+          >
+            Create a shareable PDF of {whose} health record for a visit. Choose a date range and download it when it’s ready.
+          </LockedFeature>
+        ) : checkingPlan ? (
+          <StatusBanner type="info" message="Checking your plan before opening health summaries…" />
+        ) : planError ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <StatusBanner type="warning" message="We couldn’t verify your plan. Please check again to access health summaries." />
+            <Button variant="outline" size="sm" onClick={() => void reloadPlan()} style={{ alignSelf: 'flex-start' }}>
+              Check again
+            </Button>
+          </div>
+        ) : tier === 'PREMIUM' ? (
+          <>
         <p style={{ fontSize: '0.85rem', color: 'var(--on-surface-variant)', lineHeight: 1.55 }}>
           A PDF of what has been recorded in Vitals for {whose} record over a period
           you choose — medications and the doses logged against them, appointments,
@@ -247,28 +245,18 @@ export function HealthSummarySection({
           icon="download"
           onClick={download}
           loading={downloading}
-          disabled={blocked || downloading}
+          disabled={downloading}
           style={{ width: '100%' }}
         >
           {downloading ? 'Preparing…' : 'Generate summary'}
         </Button>
 
-        {isPremium === false && (
-          <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)', textAlign: 'center' }}>
-            Health summaries are part of Premium.
-          </p>
-        )}
-
-        {isPremium === null && (
-          <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)', textAlign: 'center' }}>
-            We couldn&rsquo;t check your plan just now. Try again shortly.
-          </p>
-        )}
-
         <p style={{ fontSize: '0.72rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
           The document summarises what was entered in Vitals. It contains no
           diagnosis, assessment or advice.
         </p>
+          </>
+        ) : null}
       </div>
     </CollapsibleCard>
   )

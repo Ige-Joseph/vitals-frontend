@@ -4,6 +4,8 @@ import { Link, useParams } from 'react-router-dom'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, Skeleton, StatusBanner } from '@/components/ui'
+import { UpgradePrompt } from '@/components/billing/PremiumAccess'
+import { useBillingTier } from '@/hooks/useBillingStatus'
 import { RegrantPanel } from '@/components/family/RegrantPanel'
 import type { Capacity } from '@/pages/profile/FamilySection'
 import {
@@ -48,6 +50,7 @@ type Stage =
 export function InvitationPage() {
   const { token, invitationId } = useParams()
   const { user, isAuthenticated } = useAuthStore()
+  const { tier } = useBillingTier(isAuthenticated)
 
   /**
    * Two ways to reach one offer.
@@ -163,6 +166,9 @@ export function InvitationPage() {
     }
   }
 
+  const atConnectionCeiling =
+    capacity !== null && capacity.connectionsUsed >= capacity.connectionLimit
+
   const shell = (children: React.ReactNode) => (
     <div style={{ minHeight: '100dvh', background: 'var(--surface)', padding: 'clamp(1.5rem, 5vw, 3rem) 1.5rem' }}>
       <div style={{ width: '100%', maxWidth: 520, margin: '0 auto' }} className="animate-fade-up">
@@ -271,12 +277,24 @@ export function InvitationPage() {
 
         {error && <StatusBanner type="error" message={error} />}
 
+        {atConnectionCeiling && tier === 'FREE' ? (
+          <UpgradePrompt
+            title="This connection needs Premium capacity"
+            description={`You’ve reached this account’s limit of ${capacity?.connectionLimit} connected records. Upgrade, or disconnect from someone in Profile → Family; this invitation will remain available.`}
+          />
+        ) : atConnectionCeiling ? (
+          <StatusBanner
+            type="info"
+            message="Your current connection capacity is full. Disconnect from someone in Profile → Family to open both records; this invitation will remain available."
+          />
+        ) : null}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <Button
             variant="primary"
             onClick={() => respond('connect')}
             loading={busy === 'connect'}
-            disabled={busy !== null}
+            disabled={busy !== null || atConnectionCeiling}
             style={{ width: '100%' }}
           >
             Open both records
@@ -414,9 +432,6 @@ export function InvitationPage() {
     )
   }
 
-  const atConnectionCeiling =
-    capacity !== null && capacity.connectionsUsed >= capacity.connectionLimit
-
   return shell(
     <>
       {offer}
@@ -428,21 +443,22 @@ export function InvitationPage() {
           else's shared with it. So a full account can still take ownership —
           only the connection is out of reach, and only that is explained. */}
       {atConnectionCeiling && (
-        <div style={{
-          padding: '0.875rem 1rem', borderRadius: 'var(--radius-lg)',
-          background: 'var(--surface-container-low)',
-        }}>
-          <p style={{ fontWeight: 700, fontSize: '0.85rem', fontFamily: 'var(--font-headline)', color: 'var(--on-surface)' }}>
-            You&rsquo;re connected to as many people as this account allows
-          </p>
-          <p style={{ fontSize: '0.8rem', color: 'var(--on-surface-variant)', marginTop: '0.2rem', lineHeight: 1.55 }}>
-            {capacity?.connectionLimit === 0
-              ? 'Connecting to someone else\u2019s record is part of Premium.'
-              : `You're using all ${capacity?.connectionLimit} of your connections.`}
-            {' '}Upgrade, or disconnect from someone in Profile \u2192 Family, and this
-            invitation will still be here.
-          </p>
-        </div>
+        tier === 'FREE' ? (
+          <UpgradePrompt
+            title="This connection needs Premium capacity"
+            description={`You’ve reached this account’s limit of ${capacity?.connectionLimit} connected records. Upgrade, or disconnect from someone in Profile → Family; this invitation will remain available.`}
+          />
+        ) : tier === 'PREMIUM' ? (
+          <StatusBanner
+            type="info"
+            message={`You’re using all ${capacity?.connectionLimit} connection slots currently assigned to this account. Disconnect from someone in Profile → Family to accept; this invitation will remain available.`}
+          />
+        ) : (
+          <StatusBanner
+            type="info"
+            message="Your current connection capacity is full. Check your plan or disconnect from someone in Profile → Family to accept; this invitation will remain available."
+          />
+        )
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>

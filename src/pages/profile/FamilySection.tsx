@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { UpgradePrompt } from '@/components/billing/PremiumAccess'
+import { useBillingTier } from '@/hooks/useBillingStatus'
 import { PersonProfile } from './PersonProfile'
 import { InviteModal } from '@/components/family/InviteModal'
 import { PendingInvitations } from '@/components/family/PendingInvitations'
@@ -196,6 +198,7 @@ export function FamilySection() {
   const [withdrawing, setWithdrawing] = useState<string | null>(null)
   const [responding, setResponding] = useState<string | null>(null)
   const { user } = useAuthStore()
+  const { tier } = useBillingTier()
 
   const load = async () => {
     try {
@@ -380,6 +383,8 @@ export function FamilySection() {
 
   const canAddManaged =
     capacity !== null && capacity.managedUsed < capacity.managedLimit
+  const atConnectionCapacity =
+    capacity !== null && capacity.connectionsUsed >= capacity.connectionLimit
 
   // Anything this account is OWNER of can be offered to somebody else — the
   // account's own record included, which is the ordinary case.
@@ -433,11 +438,17 @@ export function FamilySection() {
               Your first baby doesn't count towards this.
             </p>
           )}
-          {!canAddManaged && (
+          {tier === 'FREE' && (!canAddManaged || atConnectionCapacity) ? (
+            <UpgradePrompt
+              title="Make room for more family connections"
+              description="You’ve reached the current capacity for managing people or connecting to shared records. Premium adds capacity for both. Your first baby through Mother & Baby remains included when applicable, and sending an invitation does not use your own connection capacity."
+            />
+          ) : null}
+          {tier === 'PREMIUM' && !canAddManaged ? (
             <p style={{ fontSize: '0.78rem', color: 'var(--on-surface-variant)' }}>
-              Upgrade to manage more people.
+              You’re using the managed-person capacity currently assigned to this account. Existing records remain available.
             </p>
-          )}
+          ) : null}
 
           {/* Sharing is not bounded by this account's ceilings.
               Inviting somebody to a record you manage spends a slot on

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { DailyQuotaStatus } from '@/components/billing/PremiumAccess'
+import { useBillingTier, useDailyUsage } from '@/hooks/useBillingStatus'
 import { api, ApiError } from '@/lib/api'
 import type { Pagination, SymptomEntry } from './my-care.types'
 
@@ -175,6 +177,18 @@ export function SymptomChecker() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<SymptomResult | null>(null)
   const [error, setError] = useState('')
+  const [quotaMessage, setQuotaMessage] = useState('')
+  const { tier } = useBillingTier()
+  const { usage, loading: usageLoading, reload: reloadUsage } = useDailyUsage()
+  const symptomUsage = usage?.symptomChecks
+  useEffect(() => {
+    if (quotaMessage && symptomUsage && symptomUsage.used < symptomUsage.limit) {
+      setQuotaMessage('')
+    }
+  }, [quotaMessage, symptomUsage])
+  const quotaReached = Boolean(
+    quotaMessage || (symptomUsage && symptomUsage.used >= symptomUsage.limit),
+  )
 
   const handleCheck = async () => {
     if (!text.trim()) return
@@ -185,8 +199,14 @@ export function SymptomChecker() {
     try {
       const response = await api.post<SymptomResult>('/api/v1/symptoms/check', { symptomsText: text })
       setResult(response)
+      void reloadUsage()
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Symptom check failed. Please try again.')
+      if (requestError instanceof ApiError && requestError.errorCode === 'QUOTA_EXCEEDED') {
+        setQuotaMessage(requestError.message)
+        void reloadUsage()
+      } else {
+        setError(requestError instanceof ApiError ? requestError.message : 'Symptom check failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -222,6 +242,15 @@ export function SymptomChecker() {
 
       {view === 'check' ? (
         <>
+          <DailyQuotaStatus
+            label="Symptom checks"
+            used={symptomUsage?.used}
+            limit={symptomUsage?.limit}
+            tier={tier}
+            loading={usageLoading}
+            reachedOverride={Boolean(quotaMessage)}
+            limitMessage={quotaMessage || undefined}
+          />
           <Card style={{ padding: '1.25rem' }}>
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', padding: '0.75rem', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)' }}>
               <span className="material-symbols-outlined icon-sm" style={{ color: 'var(--tertiary)' }} aria-hidden="true">info</span>
@@ -242,7 +271,7 @@ export function SymptomChecker() {
               onBlur={event => (event.target.style.borderColor = 'var(--outline-variant)')}
             />
             {error ? <div style={{ marginTop: '0.75rem' }}><StatusBanner type="error" message={error} /></div> : null}
-            <Button onClick={handleCheck} loading={loading} style={{ width: '100%', marginTop: '1rem' }} disabled={!text.trim()} icon="psychology">
+            <Button onClick={handleCheck} loading={loading} style={{ width: '100%', marginTop: '1rem' }} disabled={!text.trim() || quotaReached} icon="psychology">
               {loading ? 'Analysing…' : 'Check symptoms'}
             </Button>
           </Card>

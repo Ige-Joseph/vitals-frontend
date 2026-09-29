@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { DailyQuotaStatus } from '@/components/billing/PremiumAccess'
+import { useBillingTier, useDailyUsage } from '@/hooks/useBillingStatus'
 import { api, ApiError } from '@/lib/api'
 import type { DrugEntry, Pagination } from './my-care.types'
 
@@ -163,6 +165,18 @@ export function DrugDetection() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<DrugResult | null>(null)
   const [error, setError] = useState('')
+  const [quotaMessage, setQuotaMessage] = useState('')
+  const { tier } = useBillingTier()
+  const { usage, loading: usageLoading, reload: reloadUsage } = useDailyUsage()
+  const detectionUsage = usage?.drugDetections
+  useEffect(() => {
+    if (quotaMessage && detectionUsage && detectionUsage.used < detectionUsage.limit) {
+      setQuotaMessage('')
+    }
+  }, [quotaMessage, detectionUsage])
+  const quotaReached = Boolean(
+    quotaMessage || (detectionUsage && detectionUsage.used >= detectionUsage.limit),
+  )
 
   const handleFile = (selectedFile: File) => {
     if (!ALLOWED_IMAGE_TYPES.has(selectedFile.type)) {
@@ -192,8 +206,14 @@ export function DrugDetection() {
       formData.append('image', file)
       const response = await api.upload<DrugResult>('/api/v1/drug-detection', formData)
       setResult(response)
+      void reloadUsage()
     } catch (requestError) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Detection failed. Please try again.')
+      if (requestError instanceof ApiError && requestError.errorCode === 'QUOTA_EXCEEDED') {
+        setQuotaMessage(requestError.message)
+        void reloadUsage()
+      } else {
+        setError(requestError instanceof ApiError ? requestError.message : 'Detection failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -225,6 +245,15 @@ export function DrugDetection() {
 
       {view === 'scan' ? (
         <>
+          <DailyQuotaStatus
+            label="Drug scans"
+            used={detectionUsage?.used}
+            limit={detectionUsage?.limit}
+            tier={tier}
+            loading={usageLoading}
+            reachedOverride={Boolean(quotaMessage)}
+            limitMessage={quotaMessage || undefined}
+          />
           <Card style={{ padding: '1.25rem' }}>
             <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>Drug identification</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>Upload a clear photo of a medication label or packaging.</p>
@@ -266,7 +295,7 @@ export function DrugDetection() {
             />
             {error ? <div style={{ marginTop: '0.875rem' }}><StatusBanner type="error" message={error} /></div> : null}
             {file ? (
-              <Button onClick={handleDetect} loading={loading} style={{ width: '100%', marginTop: '1rem' }} icon="biotech">
+              <Button onClick={handleDetect} loading={loading} style={{ width: '100%', marginTop: '1rem' }} disabled={quotaReached || !file} icon="biotech">
                 {loading ? 'Analysing image…' : 'Identify medication'}
               </Button>
             ) : null}
