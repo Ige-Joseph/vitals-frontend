@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { AsyncRoute } from '@/components/routing/AsyncRoute'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
-import { BabySection } from './BabySection'
-import { MoodLogger } from './MoodLogger'
 import { PregnancySetupForm, PregnancyTimelineView } from './PregnancySection'
 import type { MotherBabyTab, PregnancyTimeline, PregnancyTimelineState } from './mother-baby.types'
+
+const BabySection = lazy(() => import('./BabySection').then((module) => ({ default: module.BabySection })))
+const MoodLogger = lazy(() => import('./MoodLogger').then((module) => ({ default: module.MoodLogger })))
 
 const TABS: { id: MotherBabyTab; label: string; icon: string }[] = [
   { id: 'timeline', label: 'Timeline', icon: 'pregnant_woman' },
@@ -143,8 +145,8 @@ export function MotherBabyPage() {
             onRetry={() => void loadTimeline()}
           />
         ) : null}
-        {tab === 'mood' ? <MoodLogger /> : null}
-        {tab === 'baby' ? <BabySection /> : null}
+        {tab === 'mood' ? <AsyncRoute label="mood"><MoodLogger /></AsyncRoute> : null}
+        {tab === 'baby' ? <AsyncRoute label="baby profile"><BabySection /></AsyncRoute> : null}
       </div>
 
       {showResetModal ? (

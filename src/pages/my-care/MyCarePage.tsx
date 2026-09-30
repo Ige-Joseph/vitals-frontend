@@ -1,10 +1,13 @@
+import { lazy } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { AsyncRoute } from '@/components/routing/AsyncRoute'
 import { CareTimeline } from '@/components/care/CareTimeline'
-import { MedicationsPage } from '@/pages/MedicationsPage'
-import { AppointmentsPage } from '@/pages/AppointmentsPage'
-import { DrugDetection } from './DrugDetection'
-import { SymptomChecker } from './SymptomChecker'
 import type { CareTab } from './my-care.types'
+
+const MedicationsPage = lazy(() => import('@/pages/MedicationsPage').then((module) => ({ default: module.MedicationsPage })))
+const AppointmentsPage = lazy(() => import('@/pages/AppointmentsPage').then((module) => ({ default: module.AppointmentsPage })))
+const DrugDetection = lazy(() => import('./DrugDetection').then((module) => ({ default: module.DrugDetection })))
+const SymptomChecker = lazy(() => import('./SymptomChecker').then((module) => ({ default: module.SymptomChecker })))
 
 const CARE_TABS: { id: CareTab; label: string; icon: string }[] = [
   { id: 'timeline', label: 'Timeline', icon: 'event_note' },
@@ -23,13 +26,13 @@ function isCareTab(value: string | null): value is CareTab {
 function CareTabContent({ tab, personId }: { tab: CareTab; personId?: string }) {
   switch (tab) {
     case 'medications':
-      return <MedicationsPage embedded />
+      return <AsyncRoute label="medications"><MedicationsPage embedded /></AsyncRoute>
     case 'appointments':
-      return <AppointmentsPage embedded personId={personId} />
+      return <AsyncRoute label="appointments"><AppointmentsPage embedded personId={personId} /></AsyncRoute>
     case 'symptoms':
-      return <SymptomChecker />
+      return <AsyncRoute label="symptom checker"><SymptomChecker /></AsyncRoute>
     case 'drug':
-      return <DrugDetection />
+      return <AsyncRoute label="drug scan"><DrugDetection /></AsyncRoute>
     case 'timeline':
     default:
       return <CareTimeline />
