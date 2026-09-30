@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useState, type FormEvent } from 'react'
-import { Badge, Button, Card, Input, Skeleton, StatusBanner } from '@/components/ui'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Badge, Button, Card, EmptyState, Input, Skeleton, StatusBanner } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 import type { BabyPlan } from './mother-baby.types'
 
@@ -144,15 +144,21 @@ export function BabySection() {
   const [resetting, setResetting] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
 
-  useEffect(() => {
-    void api.get<BabyPlan[]>('/api/v1/mother-baby/baby-profile')
-      .then(setPlans)
-      .catch(requestError => {
-        setError(requestError instanceof ApiError ? requestError.message : 'Failed to load the baby profile.')
-      })
-      .finally(() => setLoading(false))
+  const load = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      setPlans(await api.get<BabyPlan[]>('/api/v1/mother-baby/baby-profile'))
+    } catch (requestError) {
+      setLoadError(requestError instanceof ApiError ? requestError.message : 'Failed to load the baby profile.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { void load() }, [load])
 
   const handleReset = async () => {
     setResetting(true)
@@ -170,6 +176,12 @@ export function BabySection() {
   }
 
   if (loading) return <Skeleton height={200} />
+
+  if (loadError) {
+    return <Card style={{ padding: '2rem' }}>
+      <EmptyState icon="wifi_off" title="Couldn't load the baby profile" description={loadError} action={<Button icon="refresh" onClick={() => void load()}>Try again</Button>} />
+    </Card>
+  }
 
   if (plans.length === 0 || showForm) {
     return (

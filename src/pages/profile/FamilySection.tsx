@@ -190,6 +190,7 @@ export function FamilySection() {
   const [capacity, setCapacity] = useState<Capacity | null>(null)
   const [openPersonId, setOpenPersonId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [success, setSuccess] = useState('')
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [received, setReceived] = useState<ReceivedInvitation[]>([])
@@ -201,6 +202,7 @@ export function FamilySection() {
   const { tier } = useBillingTier()
 
   const load = async () => {
+    setLoadError('')
     try {
       const [list, cap, mine] = await Promise.all([
         api.get<PersonListEntry[]>('/api/v1/persons'),
@@ -239,8 +241,7 @@ export function FamilySection() {
         results.flatMap(r => (r.status === 'fulfilled' ? r.value : [])),
       )
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Could not load your family')
-      setPeople([])
+      setLoadError(e instanceof ApiError ? e.message : 'Could not load your family')
     }
   }
 
@@ -368,6 +369,17 @@ export function FamilySection() {
   }
 
   if (people === null) {
+    if (loadError) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <StatusBanner type="error" message={loadError} />
+          <Button variant="outline" size="sm" icon="refresh" onClick={() => void load()} style={{ alignSelf: 'flex-start' }}>
+            Try again
+          </Button>
+        </div>
+      )
+    }
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <Skeleton height={18} width="40%" />

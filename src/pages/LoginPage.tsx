@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
-import { Button, Input, StatusBanner } from '@/components/ui'
+import { Button, Input, PasswordVisibilityIcon, StatusBanner } from '@/components/ui'
 import { ApiError } from '@/lib/api'
 import { AuthDivider, GoogleButton } from '@/components/auth/GoogleButton'
 
@@ -158,9 +158,9 @@ export function LoginPage() {
               required
               autoComplete="current-password"
               rightElement={
-                <button type="button" onClick={() => setShowPw(p => !p)}
+                <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--outline)', display: 'flex' }}>
-                  <span className="material-symbols-outlined icon-sm">{showPw ? 'visibility_off' : 'visibility'}</span>
+                  <PasswordVisibilityIcon visible={showPw} />
                 </button>
               }
             />
@@ -182,11 +182,11 @@ export function LoginPage() {
       </div>
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 800px) {
           .auth-hero { display: none !important; }
           .auth-mobile-logo { display: flex !important; }
         }
-        @media (min-width: 769px) {
+        @media (min-width: 801px) {
           .auth-mobile-logo { display: none !important; }
         }
       `}</style>

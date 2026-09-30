@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { SESSION_EXPIRED_EVENT } from '@/lib/session'
+import { Spinner } from '@/components/ui'
 
 // Auth pages
 import { LoginPage } from '@/pages/LoginPage'
@@ -36,7 +37,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated } = useAuthStore()
   const location = useLocation()
 
-  if (!hasHydrated) return null
+  if (!hasHydrated) return <AuthPending />
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
@@ -49,7 +50,7 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, hasHydrated } = useAuthStore()
   const location = useLocation()
 
-  if (!hasHydrated) return null
+  if (!hasHydrated) return <AuthPending />
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />
@@ -65,13 +66,22 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 function RequireGuest({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, hasHydrated } = useAuthStore()
 
-  if (!hasHydrated) return null
+  if (!hasHydrated) return <AuthPending />
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
+}
+
+function AuthPending() {
+  return (
+    <main role="status" aria-live="polite" style={{ minHeight: '100dvh', display: 'grid', placeContent: 'center', gap: '0.75rem', justifyItems: 'center', color: 'var(--on-surface-variant)' }}>
+      <Spinner size={28} color="var(--primary)" />
+      <span>Checking your session…</span>
+    </main>
+  )
 }
 
 export default function App() {

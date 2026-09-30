@@ -22,8 +22,7 @@ export default defineConfig({
         scope: '/',
         lang: 'en',
         categories: ['health', 'medical', 'lifestyle'],
-        // SVG icons are placeholders — replace with PNG when you have real assets.
-        // Required for full install: 192x192.png and 512x512.png (maskable).
+        // The PNG icons below are the install icons; SVG variants remain for shortcuts.
         icons: [
           {
             src: '/icons/icon-192x192.png',

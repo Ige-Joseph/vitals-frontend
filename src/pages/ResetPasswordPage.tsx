@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, Input, StatusBanner } from '@/components/ui'
+import { Button, Input, PasswordVisibilityIcon, StatusBanner } from '@/components/ui'
 import { api, ApiError } from '@/lib/api'
 
 const pwRequirements = [
@@ -94,9 +94,9 @@ export function ResetPasswordPage() {
             autoComplete="new-password"
             disabled={!token}
             rightElement={
-              <button type="button" onClick={() => setShowPw(p => !p)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--outline)', display: 'flex' }}>
-                <span className="material-symbols-outlined icon-sm">{showPw ? 'visibility_off' : 'visibility'}</span>
+                <button type="button" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--outline)', display: 'flex' }}>
+                  <PasswordVisibilityIcon visible={showPw} />
               </button>
             }
           />

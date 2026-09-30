@@ -29,18 +29,20 @@ function DrugHistory() {
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
 
   const load = useCallback(async (requestedPage: number) => {
     setLoading(true)
+    setLoadError('')
     try {
       const response = await api.get<{ entries: DrugEntry[]; pagination: Pagination }>(
         `/api/v1/drug-detection/history?page=${requestedPage}&limit=10`,
       )
       setEntries(response.entries)
       setPagination(response.pagination)
-    } catch {
-      // The empty state remains usable when history cannot be loaded.
+    } catch (requestError) {
+      setLoadError(requestError instanceof ApiError ? requestError.message : 'Could not load scan history. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -56,6 +58,10 @@ function DrugHistory() {
         {[1, 2, 3].map(item => <Skeleton key={item} height={80} style={{ borderRadius: 'var(--radius-xl)' }} />)}
       </div>
     )
+  }
+
+  if (loadError) {
+    return <EmptyState icon="wifi_off" title="Couldn't load scan history" description={loadError} action={<Button icon="refresh" onClick={() => void load(page)}>Try again</Button>} />
   }
 
   if (entries.length === 0) {

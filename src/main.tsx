@@ -5,6 +5,16 @@ import './index.css'
 import { clearLegacySensitiveCaches } from '@/lib/browser-security'
 import { PwaUpdatePrompt } from '@/components/PwaUpdatePrompt'
 
+// Material Symbols are loaded from Google Fonts. Keep ligature text hidden if
+// the font is unavailable so names such as "mail" never leak into the UI.
+if ('fonts' in document) {
+  void document.fonts.load('24px "Material Symbols Outlined"', 'mail')
+    .then((faces) => {
+      if (faces.length > 0) document.documentElement.dataset.materialSymbols = 'ready'
+    })
+    .catch(() => undefined)
+}
+
 // Older releases cached authenticated API responses. Purge those entries as
 // early as possible; the current service worker no longer caches API traffic.
 void clearLegacySensitiveCaches()

@@ -110,6 +110,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
+/* Hide ligature names until the icon font is ready, and keep them hidden if
+   the external font fails. This avoids exposing words such as "mail" or
+   "visibility" as fallback icon text. */
+html:not([data-material-symbols="ready"]) .material-symbols-outlined {
+  font-size: 0 !important;
+}
+
 
 .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 .icon-sm { font-size: 18px; }
@@ -179,6 +186,23 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
 .animate-pulse     { animation: pulse 2s ease infinite; }
 .animate-spin      { animation: spin 0.8s linear infinite; }
 .animate-bounce-subtle { animation: bounceSubtle 2s ease infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Keep motion that communicates an active load in progress. */
+  .loading-spinner {
+    animation-duration: 0.9s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
 
 /* Skeleton shimmer */
 .skeleton {

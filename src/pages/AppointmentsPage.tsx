@@ -22,10 +22,13 @@ export function AppointmentsPage({ embedded, personId }: { embedded?: boolean; p
   const [loading, setLoading] = useState(true)
   const [booking, setBooking] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const load = async () => {
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true)
+    setLoadError('')
     try {
       // `all` rather than `upcoming`: this page shows both, and splitting one
       // response is cheaper than two round trips.
@@ -35,9 +38,11 @@ export function AppointmentsPage({ embedded, personId }: { embedded?: boolean; p
       setAppointments(data)
       setError('')
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Could not load your appointments')
+      if (!silent) {
+        setLoadError(e instanceof ApiError ? e.message : 'Could not load your appointments')
+      }
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -57,7 +62,7 @@ export function AppointmentsPage({ embedded, personId }: { embedded?: boolean; p
     // like the booking failed.
     setAppointments(current => [appointment, ...current])
     flash('Appointment booked. We’ll remind you before it.')
-    void load()
+    void load(true)
     window.dispatchEvent(new Event('vitals:refresh-timeline'))
   }
 
@@ -176,6 +181,15 @@ export function AppointmentsPage({ embedded, personId }: { embedded?: boolean; p
             <Skeleton key={i} height={120} style={{ borderRadius: 'var(--radius-xl)' }} />
           ))}
         </div>
+      ) : loadError ? (
+        <Card style={{ padding: '2.5rem 1.5rem' }}>
+          <EmptyState
+            icon="wifi_off"
+            title="Couldn't load appointments"
+            description={loadError}
+            action={<Button icon="refresh" onClick={() => void load()}>Try again</Button>}
+          />
+        </Card>
       ) : appointments.length === 0 ? (
         <Card style={{ padding: '2.5rem 1.5rem' }}>
           <EmptyState

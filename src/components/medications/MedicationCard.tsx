@@ -3,10 +3,12 @@ import { Medication, FREQ_LABELS } from './medication.types'
 
 interface Props {
   med: Medication
-  onDeactivate: (id: string) => void
+  onDeactivate: (id: string) => Promise<void>
+  busy?: boolean
+  disabled?: boolean
 }
 
-export function MedicationCard({ med, onDeactivate }: Props) {
+export function MedicationCard({ med, onDeactivate, busy = false, disabled = false }: Props) {
   const active = med.carePlan.status === 'ACTIVE'
 
   return (
@@ -161,7 +163,10 @@ export function MedicationCard({ med, onDeactivate }: Props) {
 
       {active && (
         <button
-          onClick={() => onDeactivate(med.carePlan.id)}
+          type="button"
+          onClick={() => void onDeactivate(med.carePlan.id)}
+          disabled={busy || disabled}
+          aria-busy={busy}
           style={{
             marginTop: '1rem',
             fontSize: '0.8125rem',
@@ -171,9 +176,10 @@ export function MedicationCard({ med, onDeactivate }: Props) {
             cursor: 'pointer',
             fontWeight: 600,
             padding: 0,
+            opacity: busy ? 0.65 : 1,
           }}
         >
-          Stop medication
+          {busy ? 'Stopping…' : 'Stop medication'}
         </button>
       )}
     </div>

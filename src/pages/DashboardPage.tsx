@@ -131,21 +131,18 @@ const STATUS_CONFIG = {
   MISSED:   { label: 'Missed',  color: 'var(--error)',     bg: 'var(--error-container)' },
 }
 
-function TaskCard({ event, onAction }: { event: CareEvent; onAction: (id: string, status: 'DONE' | 'SKIPPED') => void }) {
+function TaskCard({ event, onAction }: { event: CareEvent; onAction: (id: string, status: 'DONE' | 'SKIPPED') => Promise<void> }) {
   const [acting, setActing] = useState(false)
   const icon = EVENT_TYPE_ICON[event.eventType] ?? EVENT_TYPE_ICON.default
   const cfg  = STATUS_CONFIG[event.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.PENDING
   const time  = new Date(event.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const [removing, setRemoving] = useState(false)
-
   const handle = async (status: 'DONE' | 'SKIPPED') => {
     setActing(true)
-    setRemoving(true)
-
-    setTimeout(() => {
-      onAction(event.id, status)
+    try {
+      await onAction(event.id, status)
+    } finally {
       setActing(false)
-    }, 400)
+    }
   }
 
 return (
@@ -163,13 +160,7 @@ return (
         ? '3px solid #16a34a'
         : '3px solid transparent',
 
-    opacity: removing ? 0 : event.status === 'DONE' ? 0.7 : 1,
-    transform: removing ? 'translateX(16px) scale(0.98)' : 'translateX(0) scale(1)',
-    maxHeight: removing ? 0 : 140,
-    paddingTop: removing ? 0 : '1.125rem',
-    paddingBottom: removing ? 0 : '1.125rem',
-    overflow: 'hidden',
-    transition: 'opacity 0.2s ease, transform 0.2s ease, max-height 0.25s ease, padding 0.25s ease',
+    opacity: event.status === 'DONE' ? 0.7 : 1,
   }}>
       <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-lg)', background: `${cfg.bg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <span className="material-symbols-outlined" style={{ color: cfg.color, fontSize: 22 }}>{icon}</span>
@@ -180,17 +171,17 @@ return (
       </div>
       {event.status === 'PENDING' ? (
         <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-          <button onClick={() => handle('DONE')} disabled={acting} style={{
+          <button aria-label={`Mark ${event.title} done`} aria-busy={acting} onClick={() => void handle('DONE')} disabled={acting} style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: acting ? 0.6 : 1, pointerEvents: acting ? 'none' : 'auto',
           }}>
-            <span className="material-symbols-outlined icon-sm">check</span>
+            <span className="material-symbols-outlined icon-sm">{acting ? 'hourglass_top' : 'check'}</span>
           </button>
-          <button onClick={() => handle('SKIPPED')} disabled={acting} style={{
+          <button aria-label={`Skip ${event.title}`} aria-busy={acting} onClick={() => void handle('SKIPPED')} disabled={acting} style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: acting ? 0.6 : 1, pointerEvents: acting ? 'none' : 'auto',
           }}>
-            <span className="material-symbols-outlined icon-sm">close</span>
+            <span className="material-symbols-outlined icon-sm">{acting ? 'hourglass_top' : 'close'}</span>
           </button>
         </div>
       ) : (
@@ -286,21 +277,20 @@ export function DashboardPage() {
   }, [selectedPersonId])
 
   const updateEventStatus = async (id: string, status: 'DONE' | 'SKIPPED') => {
-    setData(prev => {
-      if (!prev) return prev
-
-      return {
-        ...prev,
-        todayTasks: prev.todayTasks.filter(e => e.id !== id),
-        upcomingReminders: prev.upcomingReminders.filter(e => e.id !== id),
-      }
-    })
-
     try {
       await api.patch(`/api/v1/care/events/${id}/status`, { status })
+      setData(prev => {
+        if (!prev) return prev
+
+        return {
+          ...prev,
+          todayTasks: prev.todayTasks.filter(e => e.id !== id),
+          upcomingReminders: prev.upcomingReminders.filter(e => e.id !== id),
+        }
+      })
     } catch (err) {
-      console.error(err)
-      load()
+      await load()
+      setError(err instanceof ApiError ? err.message : 'Could not update this reminder. Please try again.')
     }
   }
 
