@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button, Card, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { api, ApiError } from '@/lib/api'
 import type { MoodLog, MoodOption } from './mother-baby.types'
 
@@ -83,6 +84,10 @@ export function MoodLogger() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <section className="mood-context-panel" aria-label="A moment for wellbeing">
+        <div><p className="feature-eyebrow">YOUR WELLBEING</p><h2>A moment for you</h2><p>A simple check-in with how you feel today.</p></div>
+        <ContextPhoto src="/images/contextual/mood-wellbeing.webp" width={512} height={768} alt="A pregnant woman resting her hands on her belly." className="mood-context-panel__photo" />
+      </section>
       <Card style={{ padding: '1.25rem' }}>
         <h3 style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>How are you feeling?</h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>Log your mood and cravings — instant guidance follows.</p>

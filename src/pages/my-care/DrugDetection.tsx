@@ -270,7 +270,7 @@ export function DrugDetection() {
               <ContextPhoto
                 src="/images/contextual/drug-package-context.webp"
                 srcSet="/images/contextual/drug-package-context-480.webp 320w, /images/contextual/drug-package-context.webp 683w"
-                sizes="(max-width: 480px) 80px, 96px"
+                sizes="(max-width: 640px) calc(100vw - 4rem), 220px"
                 width={683}
                 height={1024}
                 alt=""

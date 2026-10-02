@@ -29,6 +29,7 @@ const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((module) =
 const MyCarePage = lazy(() => import('@/pages/my-care/MyCarePage').then((module) => ({ default: module.MyCarePage })))
 const MotherBabyPage = lazy(() => import('@/pages/mother-baby/MotherBabyPage').then((module) => ({ default: module.MotherBabyPage })))
 const ArticlesPage = lazy(() => import('@/pages/ArticlesPage').then((module) => ({ default: module.ArticlesPage })))
+const FamilyPage = lazy(() => import('@/pages/family/FamilyPage').then(module => ({ default: module.FamilyPage })))
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })))
 
 
@@ -117,7 +118,8 @@ export default function App() {
           <Route path="dashboard" element={<AsyncRoute label="dashboard"><DashboardPage /></AsyncRoute>} />
           <Route path="care" element={<AsyncRoute label="care"><MyCarePage /></AsyncRoute>} />
           <Route path="mother-baby" element={<AsyncRoute label="Mother & Baby"><MotherBabyPage /></AsyncRoute>} />
-          <Route path="articles" element={<AsyncRoute label="articles"><ArticlesPage /></AsyncRoute>} />
+          <Route path="articles" element={<AsyncRoute label="articles" preserveOnSearch><ArticlesPage /></AsyncRoute>} />
+          <Route path="family" element={<AsyncRoute label="family"><FamilyPage /></AsyncRoute>} />
           <Route path="profile" element={<AsyncRoute label="profile"><ProfilePage /></AsyncRoute>} />
         </Route>
 

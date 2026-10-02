@@ -44,7 +44,7 @@ function BabySetupForm({ onSuccess }: BabySetupFormProps) {
         <ContextPhoto
           src="/images/contextual/baby-newborn.webp"
           srcSet="/images/contextual/baby-newborn-480.webp 480w, /images/contextual/baby-newborn.webp 1024w"
-          sizes="(max-width: 480px) 80px, 116px"
+          sizes="(max-width: 640px) calc(100vw - 4rem), 240px"
           width={1024}
           height={683}
           alt="A sleeping newborn, shown as contextual imagery."
@@ -104,7 +104,7 @@ function BabyTimeline({ plan, onReset }: { plan: BabyPlan; onReset: () => void }
           <ContextPhoto
             src="/images/contextual/baby-newborn.webp"
             srcSet="/images/contextual/baby-newborn-480.webp 480w, /images/contextual/baby-newborn.webp 1024w"
-            sizes="(max-width: 480px) 80px, 116px"
+            sizes="(max-width: 640px) calc(100vw - 4rem), 240px"
             width={1024}
             height={683}
             alt="A sleeping newborn, shown as contextual imagery."

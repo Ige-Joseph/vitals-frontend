@@ -5,7 +5,7 @@ import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
 import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { UpgradePrompt } from '@/components/billing/PremiumAccess'
 import { useBillingTier } from '@/hooks/useBillingStatus'
-import { PersonProfile } from './PersonProfile'
+import { PersonProfile } from '@/pages/profile/PersonProfile'
 import { InviteModal } from '@/components/family/InviteModal'
 import { PendingInvitations } from '@/components/family/PendingInvitations'
 import type {
@@ -14,7 +14,7 @@ import type {
 } from '@/components/family/invitation.types'
 
 /**
- * Family lives inside Profile, not as a sixth navigation item.
+ * Family is a dedicated care route, reached from Dashboard and My Care.
  *
  * Two groupings, both always rendered: **Managed** are people with no Vitals
  * account of their own — a baby, a parent — whose records this account looks
@@ -420,7 +420,7 @@ export function FamilySection() {
           <ContextPhoto
             src="/images/contextual/family-outdoors.webp"
             srcSet="/images/contextual/family-outdoors-480.webp 480w, /images/contextual/family-outdoors.webp 1024w"
-            sizes="(max-width: 480px) 120px, 230px"
+            sizes="(max-width: 640px) calc(100vw - 4rem), 380px"
             width={1024}
             height={683}
             alt=""
@@ -429,7 +429,7 @@ export function FamilySection() {
           <ContextPhoto
             src="/images/contextual/family-home.webp"
             srcSet="/images/contextual/family-home-480.webp 320w, /images/contextual/family-home.webp 683w"
-            sizes="72px"
+            sizes="(max-width: 640px) 120px, 150px"
             width={683}
             height={1024}
             alt=""

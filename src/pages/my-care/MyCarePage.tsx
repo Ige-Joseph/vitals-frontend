@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AsyncRoute } from '@/components/routing/AsyncRoute'
 import { CareTimeline } from '@/components/care/CareTimeline'
 import type { CareTab } from './my-care.types'
@@ -52,17 +52,19 @@ export function MyCarePage() {
 
   return (
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 680, margin: '0 auto' }}>
+      <div className="care-entry-link"><Link to="/family">Family &amp; connected care <span aria-hidden="true">&rarr;</span></Link></div>
       <div className="animate-fade-up" style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>My Care</h1>
         <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Medications, symptom guidance, and drug information.</p>
       </div>
 
-      <div className="animate-fade-up delay-100" role="tablist" aria-label="Care sections" style={{ display: 'flex', gap: '0.375rem', background: 'var(--surface-container)', borderRadius: 'var(--radius-xl)', padding: '0.3rem', marginBottom: '1.5rem' }}>
+      <div className="care-tabs animate-fade-up delay-100" role="tablist" aria-label="Care sections" style={{ display: 'flex', gap: '0.375rem', background: 'var(--surface-container)', borderRadius: 'var(--radius-xl)', padding: '0.3rem', marginBottom: '1.5rem' }}>
         {CARE_TABS.map(({ id, label, icon }) => (
           <button
             key={id}
             type="button"
             role="tab"
+            aria-label={label}
             aria-selected={tab === id}
             onClick={() => setTab(id)}
             style={{
@@ -77,6 +79,7 @@ export function MyCarePage() {
           >
             <span className="material-symbols-outlined icon-sm" aria-hidden="true">{icon}</span>
             <span className="tab-label-text">{label}</span>
+            <span className="tab-label-compact" aria-hidden="true">{{ timeline: 'Timeline', medications: 'Medicines', appointments: 'Visits', symptoms: 'Symptoms', drug: 'Drug info' }[id]}</span>
           </button>
         ))}
       </div>
@@ -85,7 +88,6 @@ export function MyCarePage() {
         <CareTabContent tab={tab} personId={searchParams.get('personId') ?? undefined} />
       </div>
 
-      <style>{`.tab-label-text { display: none; } @media (min-width: 420px) { .tab-label-text { display: inline; } }`}</style>
     </div>
   )
 }

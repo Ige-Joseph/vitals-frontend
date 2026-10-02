@@ -179,6 +179,7 @@ export function CalendarSettings({
 
   return (
     <CollapsibleCard title="Google Calendar" open={open} onToggle={onToggle} className="animate-fade-up delay-250">
+      <p className="integration-note">Google Calendar is a work in progress. Connection may be unavailable while Google registration and permissions are being completed. Vitals push reminders continue to work independently.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: connected ? '#dcfce7' : 'var(--primary-fixed)', borderRadius: 'var(--radius-xl)' }}>
           <div style={{ display: 'flex', gap: '0.875rem', alignItems: 'flex-start' }}>

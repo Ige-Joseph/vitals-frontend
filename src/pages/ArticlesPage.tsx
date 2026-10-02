@@ -1,200 +1,162 @@
-import React, { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
-import { Card, Badge, EmptyState, Skeleton } from '@/components/ui'
-
-interface Article {
-  id: string; title: string; slug: string; excerpt: string
-  imageUrl: string | null; category: string; publishedAt: string | null
-}
-interface ArticleDetail extends Article { content: string }
-
-const ARTICLE_BOLD_PATTERN = /(\*\*.*?\*\*)/g
-
-/**
- * Render the small Markdown subset supported by the article editor without
- * inserting HTML into the document. React escapes every text node, so article
- * content cannot execute scripts or event handlers.
- */
-function ArticleContent({ content }: { content: string }) {
-  const lines = content.split('\n')
-
-  return (
-    <div style={{ fontSize: '0.9375rem', color: 'var(--on-surface)', lineHeight: 1.75 }}>
-      {lines.map((line, lineIndex) => (
-        <React.Fragment key={lineIndex}>
-          {line.split(ARTICLE_BOLD_PATTERN).map((part, partIndex) =>
-            part.startsWith('**') && part.endsWith('**') && part.length > 4
-              ? <strong key={partIndex}>{part.slice(2, -2)}</strong>
-              : <React.Fragment key={partIndex}>{part}</React.Fragment>
-          )}
-          {lineIndex < lines.length - 1 ? <br /> : null}
-        </React.Fragment>
-      ))}
-    </div>
-  )
-}
-
-const CATEGORIES = ['ALL', 'PREGNANCY', 'BABY_CARE', 'MEDICATION', 'NUTRITION', 'MENTAL_HEALTH']
-const CAT_LABELS: Record<string, string> = {
-  ALL:'All', PREGNANCY:'Pregnancy', BABY_CARE:'Baby Care',
-  MEDICATION:'Medication', NUTRITION:'Nutrition', MENTAL_HEALTH:'Mental Health'
-}
-const CAT_COLORS: Record<string, { bg: string; color: string }> = {
-  PREGNANCY:    { bg: 'var(--secondary-fixed)', color: 'var(--secondary)' },
-  BABY_CARE:    { bg: 'var(--tertiary-fixed)', color: 'var(--tertiary)' },
-  MEDICATION:   { bg: 'var(--primary-fixed)', color: 'var(--primary)' },
-  NUTRITION:    { bg: '#dcfce7', color: '#16a34a' },
-  MENTAL_HEALTH:{ bg: '#ede9fe', color: '#7c3aed' },
-  GENERAL:      { bg: 'var(--surface-container-high)', color: 'var(--on-surface-variant)' },
-}
-
-function ArticleCard({ article, onClick }: { article: Article; onClick: () => void }) {
-  const cc = CAT_COLORS[article.category] ?? CAT_COLORS.GENERAL
-  return (
-    <div onClick={onClick} style={{
-      background: 'var(--surface-container-lowest)', borderRadius: 'var(--radius-xl)',
-      overflow: 'hidden', boxShadow: 'var(--shadow-sm)', cursor: 'pointer',
-      transition: 'all 0.2s',
-    }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-lg)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = ''; (e.currentTarget as HTMLDivElement).style.boxShadow = 'var(--shadow-sm)' }}
-    >
-      {/* Placeholder gradient header */}
-      <div style={{ height: 120, background: `linear-gradient(135deg, ${cc.bg} 0%, ${cc.color}22 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span className="material-symbols-outlined icon-xl" style={{ color: cc.color, opacity: 0.5 }}>article</span>
-      </div>
-      <div style={{ padding: '1rem' }}>
-        <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: cc.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{CAT_LABELS[article.category] ?? article.category}</span>
-        <h3 style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--on-surface)', lineHeight: 1.35, marginTop: '0.25rem', marginBottom: '0.5rem' }}>{article.title}</h3>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.excerpt}</p>
-        {article.publishedAt && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--outline)', marginTop: '0.625rem' }}>
-            {new Date(article.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) {
-  const [article, setArticle] = useState<ArticleDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get<ArticleDetail>(`/api/v1/articles/${slug}`).then(setArticle).finally(() => setLoading(false))
-  }, [slug])
-
-  return (
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(24,28,32,0.6)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-          backdropFilter: 'blur(4px)',
-        }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-2xl)',
-          width: '100%',
-          maxWidth: 640,
-          maxHeight: '90dvh',
-          overflowY: 'auto',
-          boxShadow: 'var(--shadow-lg)',
-          animation: 'scaleIn 0.25s ease'
-      }}>
-        {loading ? (
-          <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <Skeleton height={32} width="80%" />
-            <Skeleton height={16} width="50%" />
-            {[1,2,3].map(i => <Skeleton key={i} height={80} />)}
-          </div>
-        ) : article ? (
-          <div>
-            <div style={{ padding: '1.25rem 1.5rem 0', position: 'sticky', top: 0, background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', zIndex: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '1rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{CAT_LABELS[article.category] ?? article.category}</span>
-                <button onClick={onClose} style={{ background: 'var(--surface-container)', border: 'none', width: 32, height: 32, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--on-surface-variant)' }}>
-                  <span className="material-symbols-outlined icon-sm">close</span>
-                </button>
-              </div>
-            </div>
-            <div style={{ padding: '1.5rem' }}>
-              <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.375rem', color: 'var(--on-surface)', lineHeight: 1.3, marginBottom: '0.625rem' }}>{article.title}</h1>
-              <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', fontStyle: 'italic', marginBottom: '1.5rem' }}>{article.excerpt}</p>
-              <ArticleContent content={article.content} />
-              {article.publishedAt && (
-                <p style={{ marginTop: '2rem', fontSize: '0.8125rem', color: 'var(--outline)', borderTop: '1px solid var(--outline-variant)', paddingTop: '1rem' }}>
-                  Published {new Date(article.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ padding: '2rem' }}><EmptyState icon="article" title="Article not found" /></div>
-        )}
-      </div>
-    </div>
-  )
-}
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { api, ApiError } from '@/lib/api'
+import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ArticleCard } from './articles/ArticleCard'
+import { ArticleReader } from './articles/ArticleReader'
+import { CATEGORIES, categoryLabel, type ArticleList } from './articles/articles.types'
+import './articles/articles.css'
 
 export function ArticlesPage() {
-  const [articles, setArticles] = useState<Article[]>([])
+  const [params, setParams] = useSearchParams()
+  const requestedCategory = params.get('category') ?? 'ALL'
+  const category = CATEGORIES.includes(requestedCategory) ? requestedCategory : 'ALL'
+  const requestedPage = Number(params.get('page') ?? 1)
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
+  const slug = params.get('article')
+  const [result, setResult] = useState<ArticleList | null>(null)
   const [loading, setLoading] = useState(true)
-  const [category, setCategory] = useState('ALL')
-  const [openSlug, setOpenSlug] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    const q = category === 'ALL' ? '' : `?category=${category}`
-    api.get<{ articles: Article[] }>(`/api/v1/articles${q}`)
-      .then(r => setArticles(r.articles))
-      .finally(() => setLoading(false))
-  }, [category])
+    setError('')
+    setResult(null)
+    const query = new URLSearchParams({ page: String(page), limit: '12' })
+    if (category !== 'ALL') query.set('category', category)
+    api
+      .get<ArticleList>(`/api/v1/articles?${query}`)
+      .then((data) => {
+        if (!cancelled) setResult(data)
+      })
+      .catch((err) => {
+        if (!cancelled)
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : 'We could not load the library. Please try again.'
+          )
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [category, page, attempt])
+
+  const browse = (nextCategory: string, nextPage: number) => {
+    const next = new URLSearchParams(params)
+    next.delete('article')
+    if (nextCategory === 'ALL') next.delete('category')
+    else next.set('category', nextCategory)
+    if (nextPage === 1) next.delete('page')
+    else next.set('page', String(nextPage))
+    setParams(next)
+  }
+  const closeReader = () => {
+    const next = new URLSearchParams(params)
+    next.delete('article')
+    setParams(next, { replace: true })
+  }
 
   return (
-    <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 900, margin: '0 auto' }}>
-      <div className="animate-fade-up" style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>Health Library</h1>
-        <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Curated articles for your health journey.</p>
-      </div>
-
-      {/* Category filter */}
-      <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '1.5rem' }} className="no-scrollbar animate-fade-up delay-100">
-        {CATEGORIES.map(c => (
-          <button key={c} onClick={() => setCategory(c)} style={{
-            flexShrink: 0, padding: '0.4375rem 0.875rem',
-            borderRadius: 'var(--radius-full)', border: '1.5px solid',
-            borderColor: category === c ? 'var(--primary)' : 'var(--outline-variant)',
-            background: category === c ? 'var(--primary-fixed)' : 'transparent',
-            color: category === c ? 'var(--primary)' : 'var(--on-surface-variant)',
-            fontFamily: 'var(--font-headline)', fontWeight: 600, fontSize: '0.8125rem',
-            cursor: 'pointer', transition: 'all 0.15s',
-          }}>{CAT_LABELS[c]}</button>
+    <div className="health-library">
+      <header className="library-heading">
+        <span className="library-eyebrow">READ &amp; UNDERSTAND</span>
+        <h1>Health Library</h1>
+        <p>Curated articles for your health journey.</p>
+      </header>
+      <nav className="library-topics" aria-label="Article topics">
+        {CATEGORIES.map((topic) => (
+          <button
+            key={topic}
+            type="button"
+            aria-pressed={category === topic}
+            onClick={() => browse(topic, 1)}
+          >
+            {categoryLabel(topic)}
+          </button>
         ))}
-      </div>
-
-      {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-          {[1,2,3,4,5,6].map(i => <Skeleton key={i} height={240} style={{ borderRadius: 'var(--radius-xl)' }} />)}
-        </div>
-      ) : articles.length === 0 ? (
-        <EmptyState icon="library_books" title="No articles yet" description="Content is being added. Check back soon." />
-      ) : (
-        <div className="animate-fade-up delay-200" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
-          {articles.map(a => (
-            <ArticleCard key={a.id} article={a} onClick={() => setOpenSlug(a.slug)} />
-          ))}
-        </div>
-      )}
-
-      {openSlug && <ArticleModal slug={openSlug} onClose={() => setOpenSlug(null)} />}
+      </nav>
+      <section aria-label={`${categoryLabel(category)} articles`} aria-busy={loading}>
+        {loading ? (
+          <>
+            <span className="library-sr-only" role="status">
+              Loading articles
+            </span>
+            <div className="library-grid" aria-hidden="true">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Skeleton key={i} height={310} style={{ borderRadius: 'var(--radius-xl)' }} />
+              ))}
+            </div>
+          </>
+        ) : error ? (
+          <div className="library-state" role="alert">
+            <StatusBanner type="error" message={error} />
+            <Button onClick={() => setAttempt((value) => value + 1)}>Retry library</Button>
+          </div>
+        ) : result && result.articles.length === 0 ? (
+          <EmptyState
+            icon="library_books"
+            title={
+              page > 1
+                ? 'No articles on this page'
+                : category === 'ALL'
+                  ? 'No articles yet'
+                  : `No ${categoryLabel(category).toLowerCase()} articles yet`
+            }
+            description="Try another topic or return to the full library."
+            action={
+              <Button variant="secondary" onClick={() => browse('ALL', 1)}>
+                View all articles
+              </Button>
+            }
+          />
+        ) : result ? (
+          <>
+            <p className="library-results" role="status">
+              {result.pagination.total} article{result.pagination.total === 1 ? '' : 's'}
+              {category !== 'ALL' ? ` in ${categoryLabel(category)}` : ''}
+            </p>
+            <div className="library-grid">
+              {result.articles.map((article) => {
+                const next = new URLSearchParams(params)
+                next.set('article', article.slug)
+                return <ArticleCard key={article.id} article={article} href={`?${next}`} />
+              })}
+            </div>
+            {result.pagination.pages > 1 && (
+              <nav className="library-pagination" aria-label="Article pages">
+                <Button
+                  variant="secondary"
+                  disabled={page <= 1}
+                  onClick={() => browse(category, page - 1)}
+                >
+                  Previous
+                </Button>
+                <span aria-live="polite">
+                  Page {page} of {result.pagination.pages}
+                </span>
+                <Button
+                  variant="secondary"
+                  disabled={page >= result.pagination.pages}
+                  onClick={() => browse(category, page + 1)}
+                >
+                  Next
+                </Button>
+              </nav>
+            )}
+          </>
+        ) : null}
+      </section>
+      <p className="library-note">
+        For general understanding. Articles do not replace advice from a qualified healthcare
+        professional.
+      </p>
+      {slug && <ArticleReader key={slug} slug={slug} onClose={closeReader} />}
     </div>
   )
 }

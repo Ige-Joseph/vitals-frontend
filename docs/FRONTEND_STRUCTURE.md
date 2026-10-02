@@ -32,6 +32,7 @@ src/pages/my-care/
 src/pages/mother-baby/
   MotherBabyPage.tsx      Tabs, pregnancy lifecycle, and page-level feedback
   PregnancySection.tsx   Pregnancy setup and timeline presentation
+  PregnancyJourney.tsx   Full milestone journey using server content
   MoodLogger.tsx         Mood/craving logging and recent history
   BabySection.tsx        Baby setup, reset, and vaccination timeline
   mother-baby.types.ts   Pregnancy, mood, and baby API types
@@ -77,3 +78,27 @@ Shared UI wrappers should accept the native attributes of the element they
 render. For example, `Card` accepts standard `<div>` attributes so page-owned
 dialogs can provide `role` and `aria-*` metadata without weakening the shared
 component boundary.
+
+## Health Library
+
+`src/pages/ArticlesPage.tsx` coordinates URL topic/page/reader state and the
+server-paginated list. Its feature modules live in `src/pages/articles`:
+
+- `ArticleCard.tsx`: accessible article links and published image fallbacks.
+- `ArticleReader.tsx`: native modal dialog, article fetch/retry and focus recovery.
+- `ArticleContent.tsx`: escaped text rendering with bold, headings and flat lists.
+- `articles.types.ts`: current API types, categories, dates and image URL checks.
+- `articles.css`: feature-scoped responsive presentation.
+
+The article route opts into preserving its chunk boundary on query changes,
+so opening a reader does not remount/refetch the library. Other routes retain
+the existing boundary reset behavior. API errors are distinct from empty lists
+and unpublished/missing articles. No API responses are added to PWA caching.
+
+## Family and connected care
+
+`/family` is a dedicated authenticated route, reached from Dashboard and My Care.
+`src/pages/family/FamilyPage.tsx` provides the page heading and return navigation;
+`FamilySection.tsx` retains the existing person, invitation and access workflows.
+Profile is reserved for account and personal settings. The five primary navigation
+items remain unchanged. PersonProfile remains shared with the family feature.

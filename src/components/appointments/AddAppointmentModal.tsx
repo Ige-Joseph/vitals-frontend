@@ -234,8 +234,7 @@ export function AddAppointmentModal({
 
         <div
           style={{
-            overflowY: 'auto',
-            overflowX: 'hidden',
+            overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain', scrollbarGutter: 'stable',
             padding: '1rem',
             paddingBottom: '2rem',
             display: 'flex',

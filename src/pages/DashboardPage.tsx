@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { api, ApiError } from '@/lib/api'
 import { Card, Badge, Skeleton, EmptyState, Button } from '@/components/ui'
@@ -315,9 +315,11 @@ export function DashboardPage() {
   return (
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 900, margin: '0 auto' }}>
 
+      <div className="care-entry-link"><Link to="/family">Family &amp; connected care <span aria-hidden="true">&rarr;</span></Link></div>
       {/* Header */}
       {data && <PersonSwitcher people={data.people} subject={data.subject} onSelect={selectPerson} />}
       <div className="dashboard-welcome animate-fade-up" style={{ marginBottom: '2rem' }}>
+        <div className="dashboard-welcome__copy">
         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--outline)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{today}</p>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--on-surface)', lineHeight: 1.2 }}>
           {data && !data.subject.isSelf
@@ -340,10 +342,11 @@ export function DashboardPage() {
             <span style={{ fontSize: '0.875rem', color: 'var(--tertiary)', fontWeight: 500 }}>Please verify your email to enable all features.</span>
           </div>
         )}
+        </div>
         <ContextPhoto
           src="/images/contextual/dashboard-digital-health.webp"
           srcSet="/images/contextual/dashboard-digital-health-480.webp 480w, /images/contextual/dashboard-digital-health.webp 1024w"
-          sizes="(max-width: 480px) 88px, 150px"
+          sizes="(max-width: 640px) calc(100vw - 2rem), 300px"
           width={1024}
           height={683}
           alt=""

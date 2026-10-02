@@ -32,11 +32,11 @@ class RouteChunkBoundary extends React.Component<{ children: React.ReactNode }, 
   }
 }
 
-export function AsyncRoute({ children, label }: { children: React.ReactNode; label: string }) {
+export function AsyncRoute({ children, label, preserveOnSearch = false }: { children: React.ReactNode; label: string; preserveOnSearch?: boolean }) {
   const location = useLocation()
 
   return (
-    <RouteChunkBoundary key={location.pathname + location.search}>
+    <RouteChunkBoundary key={preserveOnSearch ? location.pathname : location.pathname + location.search}>
       <Suspense fallback={<RouteLoading label={label} />}>{children}</Suspense>
     </RouteChunkBoundary>
   )

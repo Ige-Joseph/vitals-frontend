@@ -7,7 +7,7 @@ import { Button, Skeleton, StatusBanner } from '@/components/ui'
 import { UpgradePrompt } from '@/components/billing/PremiumAccess'
 import { useBillingTier } from '@/hooks/useBillingStatus'
 import { RegrantPanel } from '@/components/family/RegrantPanel'
-import type { Capacity } from '@/pages/profile/FamilySection'
+import type { Capacity } from '@/pages/family/FamilySection'
 import {
   describeBlockers,
   ROLE_OFFER_HINT,

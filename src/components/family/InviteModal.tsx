@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 
 import { api, ApiError } from '@/lib/api'
 import { Button, Input, StatusBanner } from '@/components/ui'
-import type { PersonListEntry } from '@/pages/profile/FamilySection'
+import type { PersonListEntry } from '@/pages/family/FamilySection'
 import { ROLE_OFFER_HINT, ROLE_OFFER_LABEL } from './invitation.types'
 
 /**
@@ -165,7 +165,7 @@ export function InviteModal({
         </div>
 
         <div style={{
-          overflowY: 'auto', padding: '1rem', paddingBottom: '2rem',
+          overflowY: 'auto', overflowX: 'hidden', overscrollBehavior: 'contain', scrollbarGutter: 'stable', padding: '1rem', paddingBottom: '2rem',
           display: 'flex', flexDirection: 'column', gap: '1.25rem',
         }}>
           {error && <StatusBanner type="error" message={error} />}

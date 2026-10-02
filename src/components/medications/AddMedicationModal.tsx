@@ -293,6 +293,8 @@ export function AddMedicationModal({
           style={{
             overflowY: 'auto',
             overflowX: 'hidden',
+            overscrollBehavior: 'contain',
+            scrollbarGutter: 'stable',
             padding: '1rem',
             paddingBottom: '2rem',
             display: 'flex',

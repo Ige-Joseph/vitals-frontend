@@ -99,7 +99,7 @@ export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
           <ContextPhoto
             src="/images/contextual/medication-context.webp"
             srcSet="/images/contextual/medication-context-480.webp 320w, /images/contextual/medication-context.webp 683w"
-            sizes="(max-width: 480px) 68px, 88px"
+            sizes="(max-width: 640px) calc(100vw - 2rem), 150px"
             width={683}
             height={1024}
             alt=""
@@ -114,7 +114,7 @@ export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
           <ContextPhoto
             src="/images/contextual/medication-context.webp"
             srcSet="/images/contextual/medication-context-480.webp 320w, /images/contextual/medication-context.webp 683w"
-            sizes="56px"
+            sizes="(max-width: 640px) calc(100vw - 2rem), 260px"
             width={683}
             height={1024}
             alt=""
