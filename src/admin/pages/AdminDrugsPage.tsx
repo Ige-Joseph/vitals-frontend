@@ -51,9 +51,9 @@ export function AdminDrugsPage() {
   return (
     <div style={{ padding: 'clamp(1.5rem, 4vw, 2.5rem)', maxWidth: 960, margin: '0 auto' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--on-surface)' }}>Drug Scans</h1>
+        <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.75rem', color: 'var(--on-surface)' }}>Drug Information</h1>
         <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          {pagination ? `${pagination.total} total drug identification requests` : 'Loading…'}
+          {pagination ? `${pagination.total} total drug information requests` : 'Loading…'}
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export function AdminDrugsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <Card style={{ padding: '3rem' }}>
-          <EmptyState icon="biotech" title="No drug scans" description="Drug identification requests will appear here as users submit images." />
+          <EmptyState icon="biotech" title="No drug information requests" description="Medication information requests will appear here as users submit images." />
         </Card>
       ) : (
         <>

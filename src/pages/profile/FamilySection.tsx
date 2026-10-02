@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { UpgradePrompt } from '@/components/billing/PremiumAccess'
 import { useBillingTier } from '@/hooks/useBillingStatus'
 import { PersonProfile } from './PersonProfile'
@@ -407,6 +408,36 @@ export function FamilySection() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error ? <StatusBanner type="error" message={error} /> : null}
       {success ? <StatusBanner type="success" message={success} /> : null}
+
+      <section className="family-context-panel" aria-label="Family care context">
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1rem', color: 'var(--on-surface)' }}>Family care</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.45, marginTop: '0.25rem' }}>
+            Managed records and connected adults, organized side by side.
+          </p>
+        </div>
+        <div className="family-context-panel__photos" aria-hidden="true">
+          <ContextPhoto
+            src="/images/contextual/family-outdoors.webp"
+            srcSet="/images/contextual/family-outdoors-480.webp 480w, /images/contextual/family-outdoors.webp 1024w"
+            sizes="(max-width: 480px) 120px, 230px"
+            width={1024}
+            height={683}
+            alt=""
+            className="family-context-panel__main"
+          />
+          <ContextPhoto
+            src="/images/contextual/family-home.webp"
+            srcSet="/images/contextual/family-home-480.webp 320w, /images/contextual/family-home.webp 683w"
+            sizes="72px"
+            width={683}
+            height={1024}
+            alt=""
+            className="family-context-panel__inset"
+            style={{ objectPosition: 'center 70%' }}
+          />
+        </div>
+      </section>
 
       <PendingInvitations
         received={received}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { Medication } from '@/components/medications/medication.types'
 import { MedicationCard } from '@/components/medications/MedicationCard'
 import { AddMedicationModal } from '@/components/medications/AddMedicationModal'
@@ -90,17 +91,35 @@ export function MedicationsPage({ embedded }: { embedded?: boolean } = {}) {
     // No overflow:hidden on this container — modal uses a portal anyway, but belt-and-suspenders
     <div style={{ padding: embedded ? 0 : 'clamp(1rem, 4vw, 2rem)', maxWidth: 680, margin: '0 auto' }}>
       {!embedded && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }} className="animate-fade-up">
+        <div className="medications-page-header animate-fade-up">
           <div>
             <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>Medications</h1>
             <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Track your doses and stay consistent.</p>
           </div>
+          <ContextPhoto
+            src="/images/contextual/medication-context.webp"
+            srcSet="/images/contextual/medication-context-480.webp 320w, /images/contextual/medication-context.webp 683w"
+            sizes="(max-width: 480px) 68px, 88px"
+            width={683}
+            height={1024}
+            alt=""
+            className="medications-header-photo"
+          />
           <Button icon="add" onClick={() => setAdding(true)} size="sm">Add</Button>
         </div>
       )}
 
       {embedded && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+        <div className="medications-embedded-header">
+          <ContextPhoto
+            src="/images/contextual/medication-context.webp"
+            srcSet="/images/contextual/medication-context-480.webp 320w, /images/contextual/medication-context.webp 683w"
+            sizes="56px"
+            width={683}
+            height={1024}
+            alt=""
+            className="medications-header-photo"
+          />
           <Button icon="add" onClick={() => setAdding(true)} size="sm">Add medication</Button>
         </div>
       )}

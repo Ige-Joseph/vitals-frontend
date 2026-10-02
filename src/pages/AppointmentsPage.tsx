@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { api, ApiError } from '@/lib/api'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { AddAppointmentModal } from '@/components/appointments/AddAppointmentModal'
 import { AppointmentCard } from '@/components/appointments/AppointmentCard'
 import { isOpen, type Appointment } from '@/components/appointments/appointment.types'
@@ -192,6 +193,15 @@ export function AppointmentsPage({ embedded, personId }: { embedded?: boolean; p
         </Card>
       ) : appointments.length === 0 ? (
         <Card style={{ padding: '2.5rem 1.5rem' }}>
+          <ContextPhoto
+            src="/images/contextual/appointment-context.webp"
+            srcSet="/images/contextual/appointment-context-480.webp 480w, /images/contextual/appointment-context.webp 1024w"
+            sizes="(max-width: 680px) calc(100vw - 4rem), 600px"
+            width={1024}
+            height={684}
+            alt="A child being examined during a routine visit."
+            className="appointments-empty-photo"
+          />
           <EmptyState
             icon="event"
             title="No appointments yet"

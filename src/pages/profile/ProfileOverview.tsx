@@ -233,7 +233,7 @@ export function UsageSettings({
 
   const entries = [
     { label: 'Symptom checks', ...usage.symptomChecks },
-    { label: 'Drug detections', ...usage.drugDetections },
+    { label: 'Drug information checks', ...usage.drugDetections },
   ]
 
   return (

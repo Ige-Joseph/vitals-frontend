@@ -14,7 +14,7 @@ const CARE_TABS: { id: CareTab; label: string; icon: string }[] = [
   { id: 'medications', label: 'Medications', icon: 'pill' },
   { id: 'appointments', label: 'Appointments', icon: 'event' },
   { id: 'symptoms', label: 'Symptom AI', icon: 'psychology' },
-  { id: 'drug', label: 'Drug scan', icon: 'biotech' },
+  { id: 'drug', label: 'Drug Information', icon: 'biotech' },
 ]
 
 const CARE_TAB_IDS = new Set<CareTab>(CARE_TABS.map(({ id }) => id))
@@ -32,7 +32,7 @@ function CareTabContent({ tab, personId }: { tab: CareTab; personId?: string }) 
     case 'symptoms':
       return <AsyncRoute label="symptom checker"><SymptomChecker /></AsyncRoute>
     case 'drug':
-      return <AsyncRoute label="drug scan"><DrugDetection /></AsyncRoute>
+      return <AsyncRoute label="drug information"><DrugDetection /></AsyncRoute>
     case 'timeline':
     default:
       return <CareTimeline />
@@ -54,7 +54,7 @@ export function MyCarePage() {
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 680, margin: '0 auto' }}>
       <div className="animate-fade-up" style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>My Care</h1>
-        <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Medications, AI symptom check, and drug identification.</p>
+        <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Medications, symptom guidance, and drug information.</p>
       </div>
 
       <div className="animate-fade-up delay-100" role="tablist" aria-label="Care sections" style={{ display: 'flex', gap: '0.375rem', background: 'var(--surface-container)', borderRadius: 'var(--radius-xl)', padding: '0.3rem', marginBottom: '1.5rem' }}>

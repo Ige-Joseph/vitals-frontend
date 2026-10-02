@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { api, ApiError } from '@/lib/api'
 import { Card, Badge, Skeleton, EmptyState, Button } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 
 interface DashboardData {
   todayTasks: CareEvent[]
@@ -316,7 +317,7 @@ export function DashboardPage() {
 
       {/* Header */}
       {data && <PersonSwitcher people={data.people} subject={data.subject} onSelect={selectPerson} />}
-      <div className="animate-fade-up" style={{ marginBottom: '2rem' }}>
+      <div className="dashboard-welcome animate-fade-up" style={{ marginBottom: '2rem' }}>
         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--outline)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{today}</p>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--on-surface)', lineHeight: 1.2 }}>
           {data && !data.subject.isSelf
@@ -339,6 +340,15 @@ export function DashboardPage() {
             <span style={{ fontSize: '0.875rem', color: 'var(--tertiary)', fontWeight: 500 }}>Please verify your email to enable all features.</span>
           </div>
         )}
+        <ContextPhoto
+          src="/images/contextual/dashboard-digital-health.webp"
+          srcSet="/images/contextual/dashboard-digital-health-480.webp 480w, /images/contextual/dashboard-digital-health.webp 1024w"
+          sizes="(max-width: 480px) 88px, 150px"
+          width={1024}
+          height={683}
+          alt=""
+          className="dashboard-welcome__photo"
+        />
       </div>
 
       {/* Quick actions */}
@@ -461,7 +471,7 @@ export function DashboardPage() {
           <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.8125rem', color: 'var(--on-surface-variant)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '1rem' }}>AI today</p>
           {data?.usageSummary && [
               { label: 'Symptom checks', used: data.usageSummary.symptomChecksUsed, limit: data.usageSummary.symptomChecksLimit },
-              { label: 'Drug scans', used: data.usageSummary.drugDetectionsUsed, limit: data.usageSummary.drugDetectionsLimit },
+              { label: 'Drug information', used: data.usageSummary.drugDetectionsUsed, limit: data.usageSummary.drugDetectionsLimit },
           ].map(({ label, used, limit }) => (
             <div key={label} style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>

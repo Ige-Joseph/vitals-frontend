@@ -7,7 +7,7 @@ const ADMIN_NAV = [
   { to: '/admin/users',    icon: 'group',           label: 'Users'               },
   { to: '/admin/articles', icon: 'library_books',   label: 'Articles'            },
   { to: '/admin/symptoms', icon: 'psychology',      label: 'Symptom Logs'        },
-  { to: '/admin/drugs',    icon: 'biotech',         label: 'Drug Scans'          },
+  { to: '/admin/drugs',    icon: 'biotech',         label: 'Drug Information'    },
 ]
 
 export function AdminShell() {

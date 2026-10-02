@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Badge, Button, Card, Input, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { api, ApiError } from '@/lib/api'
 import type { PregnancyTimeline } from './mother-baby.types'
@@ -126,23 +127,43 @@ export function PregnancyTimelineView({ timeline, onReset }: { timeline: Pregnan
   const progress = Math.min(100, (currentWeek / 40) * 100)
   const babySize = getBabySize(currentWeek)
   const trimesterLabels = ['', 'First Trimester', 'Second Trimester', 'Third Trimester']
+  // Select only an illustration index from the current timeline week; it adds no clinical guidance.
+  const pregnancyMonth = Math.min(9, Math.max(1, Math.ceil(Math.min(40, Math.max(1, currentWeek)) * 9 / 40)))
+  const monthIllustration = `/images/contextual/baby-month-${String(pregnancyMonth).padStart(2, '0')}.webp`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #c8d8ff 0%, #d8e8ff 50%, #e8f0ff 100%)',
-        borderRadius: 'var(--radius-2xl)', padding: '1.75rem', position: 'relative', overflow: 'hidden',
-      }}>
-        <div aria-hidden="true" style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', right: 20, top: 20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.25)' }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
+      <div className="pregnancy-stage-hero">
+        <div style={{ minWidth: 0 }}>
           <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--secondary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Week {currentWeek}</p>
-          <h2 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '2.5rem', color: 'var(--on-surface)', lineHeight: 1.05 }}>Week {currentWeek}</h2>
+          <h2 className="pregnancy-stage-hero__title" style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, color: 'var(--on-surface)', lineHeight: 1.05 }}>Week {currentWeek}</h2>
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9375rem', marginTop: '0.25rem' }}>You&apos;re {currentWeek} weeks pregnant · {weeksLeft} weeks to go</p>
           <div style={{ marginTop: '1rem', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.65)', borderRadius: 'var(--radius-xl)', backdropFilter: 'blur(8px)', maxWidth: 280 }}>
             <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
               Your baby is about the size of a <strong style={{ color: 'var(--on-surface)' }}>{babySize}</strong>.
             </p>
+          </div>
+        </div>
+        <div className="pregnancy-stage-hero__media">
+          <ContextPhoto
+            src="/images/contextual/pregnancy-context.webp"
+            srcSet="/images/contextual/pregnancy-context-480.webp 320w, /images/contextual/pregnancy-context.webp 683w"
+            sizes="(max-width: 480px) 96px, 160px"
+            width={683}
+            height={1024}
+            alt="A pregnant woman holding her belly."
+            className="pregnancy-stage-hero__photo"
+          />
+          <div className="pregnancy-stage-hero__art">
+            <ContextPhoto
+              key={pregnancyMonth}
+              src={monthIllustration}
+              width={776}
+              height={1179}
+              alt={`Pregnancy journey illustration for month ${pregnancyMonth}.`}
+              className="pregnancy-stage-hero__image"
+            />
+            <span className="pregnancy-stage-hero__month">Month {pregnancyMonth}</span>
           </div>
         </div>
       </div>

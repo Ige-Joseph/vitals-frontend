@@ -107,7 +107,7 @@ export function AdminOverviewPage() {
             <StatCard label="Articles"       value={stats.articles.total}     sub={`${stats.articles.published} published`} icon="library_books" color="var(--secondary)" bg="var(--secondary-fixed)" onClick={() => nav('/admin/articles')} />
             <StatCard label="Drafts"         value={stats.articles.drafts}    icon="edit_note"     color="var(--tertiary)" bg="var(--tertiary-fixed)"  onClick={() => nav('/admin/articles')} />
             <StatCard label="Symptom logs"   value="View all"                 icon="psychology"    color="#7c3aed"         bg="#ede9fe"                 onClick={() => nav('/admin/symptoms')} />
-            <StatCard label="Drug scans"     value="View all"                 icon="biotech"       color="var(--tertiary)" bg="var(--tertiary-fixed)"  onClick={() => nav('/admin/drugs')}    />
+            <StatCard label="Drug information" value="View all"                 icon="biotech"       color="var(--tertiary)" bg="var(--tertiary-fixed)"  onClick={() => nav('/admin/drugs')}    />
           </div>
 
           {/* Quick links */}
@@ -119,7 +119,7 @@ export function AdminOverviewPage() {
                   { label: 'Create article',   icon: 'add_circle', action: () => nav('/admin/articles?new=1')   },
                   { label: 'Manage users',     icon: 'manage_accounts', action: () => nav('/admin/users')       },
                   { label: 'View symptom logs',icon: 'psychology',  action: () => nav('/admin/symptoms')        },
-                  { label: 'View drug scans',  icon: 'biotech',     action: () => nav('/admin/drugs')           },
+                  { label: 'View drug information requests', icon: 'biotech', action: () => nav('/admin/drugs') },
                 ].map(({ label, icon, action }) => (
                   <button key={label} onClick={action} style={{
                     display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem 0.75rem',

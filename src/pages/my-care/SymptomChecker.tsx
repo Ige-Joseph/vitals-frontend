@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { DailyQuotaStatus } from '@/components/billing/PremiumAccess'
 import { useBillingTier, useDailyUsage } from '@/hooks/useBillingStatus'
 import { api, ApiError } from '@/lib/api'
@@ -258,6 +259,15 @@ export function SymptomChecker() {
             limitMessage={quotaMessage || undefined}
           />
           <Card style={{ padding: '1.25rem' }}>
+            <ContextPhoto
+              src="/images/contextual/dashboard-digital-health.webp"
+              srcSet="/images/contextual/dashboard-digital-health-480.webp 480w, /images/contextual/dashboard-digital-health.webp 1024w"
+              sizes="(max-width: 480px) calc(100vw - 5.5rem), 560px"
+              width={1024}
+              height={683}
+              alt=""
+              className="symptom-context-photo"
+            />
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', padding: '0.75rem', background: 'var(--surface-container-low)', borderRadius: 'var(--radius-lg)' }}>
               <span className="material-symbols-outlined icon-sm" style={{ color: 'var(--tertiary)' }} aria-hidden="true">info</span>
               <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>General guidance only — not a diagnosis. Always consult a qualified doctor for medical advice.</p>
