@@ -84,7 +84,9 @@ component boundary.
 `src/pages/ArticlesPage.tsx` coordinates URL topic/page/reader state and the
 server-paginated list. Its feature modules live in `src/pages/articles`:
 
-- `ArticleCard.tsx`: accessible article links and published image fallbacks.
+- `ArticleCard.tsx`: accessible article links and image fallback presentation.
+  Publisher covers take priority; missing/broken covers use contextual topic photos
+  from the shared library, labelled illustrative inside the reader.
 - `ArticleReader.tsx`: native modal dialog, article fetch/retry and focus recovery.
 - `ArticleContent.tsx`: escaped text rendering with bold, headings and flat lists.
 - `articles.types.ts`: current API types, categories, dates and image URL checks.
@@ -97,7 +99,8 @@ and unpublished/missing articles. No API responses are added to PWA caching.
 
 ## Family and connected care
 
-`/family` is a dedicated authenticated route, reached from Dashboard and My Care.
+`/family` is a dedicated authenticated route, reached from the Premium-labelled family card on Dashboard.
+Premium capacity and access remain determined by the existing backend rules.
 `src/pages/family/FamilyPage.tsx` provides the page heading and return navigation;
 `FamilySection.tsx` retains the existing person, invitation and access workflows.
 Profile is reserved for account and personal settings. The five primary navigation

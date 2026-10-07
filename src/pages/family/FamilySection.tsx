@@ -14,7 +14,7 @@ import type {
 } from '@/components/family/invitation.types'
 
 /**
- * Family is a dedicated care route, reached from Dashboard and My Care.
+ * Family is a dedicated care route, reached from the Dashboard family card.
  *
  * Two groupings, both always rendered: **Managed** are people with no Vitals
  * account of their own — a baby, a parent — whose records this account looks

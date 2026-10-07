@@ -4,7 +4,7 @@ import { api, ApiError } from '@/lib/api'
 import { Button, Skeleton, StatusBanner } from '@/components/ui'
 import { ArticleImage } from './ArticleCard'
 import { ArticleContent } from './ArticleContent'
-import { articleDate, categoryLabel, imageSource, type ArticleDetail } from './articles.types'
+import { articleDate, categoryLabel, type ArticleDetail } from './articles.types'
 
 export function ArticleReader({ slug, onClose }: { slug: string; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -142,7 +142,7 @@ export function ArticleReader({ slug, onClose }: { slug: string; onClose: () => 
               </time>
             )}
             <p className="article-lead">{article.excerpt}</p>
-            {imageSource(article.imageUrl) && <ArticleImage article={article} />}
+            <ArticleImage article={article} />
             <ArticleContent content={article.content} />
             <footer className="article-reader-note">
               For general understanding. This article does not replace advice from a qualified

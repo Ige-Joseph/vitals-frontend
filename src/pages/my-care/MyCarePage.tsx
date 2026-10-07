@@ -1,5 +1,5 @@
 import { lazy } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { AsyncRoute } from '@/components/routing/AsyncRoute'
 import { CareTimeline } from '@/components/care/CareTimeline'
 import type { CareTab } from './my-care.types'
@@ -52,7 +52,6 @@ export function MyCarePage() {
 
   return (
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 680, margin: '0 auto' }}>
-      <div className="care-entry-link"><Link to="/family">Family &amp; connected care <span aria-hidden="true">&rarr;</span></Link></div>
       <div className="animate-fade-up" style={{ marginBottom: '1.5rem' }}>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--on-surface)' }}>My Care</h1>
         <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem', marginTop: '0.2rem' }}>Medications, symptom guidance, and drug information.</p>

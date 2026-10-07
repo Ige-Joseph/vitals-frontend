@@ -80,6 +80,7 @@
     border-color 0.2s;
 }
 .article-image {
+  position: relative;
   aspect-ratio: 16/9;
   overflow: hidden;
   background: var(--surface-container-low);
@@ -353,3 +354,6 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+.article-topic-image-note { display: none; }
+.article-reader .article-topic-image-note { display: block; position: absolute; bottom: .625rem; right: .625rem; padding: .375rem .625rem; border-radius: var(--radius-full); background: rgba(255,255,255,.94); color: #343d4c; font-size: .6875rem; font-weight: 600; }

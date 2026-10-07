@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { api, ApiError } from '@/lib/api'
 import { Card, Badge, Skeleton, EmptyState, Button } from '@/components/ui'
 import { ContextPhoto } from '@/components/ui/ContextPhoto'
+import { PremiumBadge } from '@/components/billing/PremiumAccess'
 
 interface DashboardData {
   todayTasks: CareEvent[]
@@ -100,7 +101,7 @@ function PersonSwitcher({
               {RELATIONSHIP_ICON[person.relationship]}
             </span>
             {person.displayName}
-            {person.upcomingTasks > 0 && <span aria-label={`${person.upcomingTasks} upcoming tasks`}>
+            {person.upcomingTasks > 0 && <span aria-label={`${person.upcomingTasks} upcoming care activities`}>
               {person.upcomingTasks}
             </span>}
           </button>
@@ -315,7 +316,6 @@ export function DashboardPage() {
   return (
     <div style={{ padding: 'clamp(1rem, 4vw, 2rem)', maxWidth: 900, margin: '0 auto' }}>
 
-      <div className="care-entry-link"><Link to="/family">Family &amp; connected care <span aria-hidden="true">&rarr;</span></Link></div>
       {/* Header */}
       {data && <PersonSwitcher people={data.people} subject={data.subject} onSelect={selectPerson} />}
       <div className="dashboard-welcome animate-fade-up" style={{ marginBottom: '2rem' }}>
@@ -328,7 +328,7 @@ export function DashboardPage() {
         </h1>
         {pendingCount > 0 && (
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
-           You have <strong style={{ color: 'var(--primary)' }}>{pendingCount} task{pendingCount > 1 ? 's' : ''}</strong> remaining today
+           You have <strong style={{ color: 'var(--primary)' }}>{pendingCount} care activit{pendingCount === 1 ? 'y' : 'ies'}</strong> remaining today
             {totalTasks > 0 && (
               <>
                 {' '}— {completedTasks} of {totalTasks} completed.
@@ -344,11 +344,11 @@ export function DashboardPage() {
         )}
         </div>
         <ContextPhoto
-          src="/images/contextual/dashboard-digital-health.webp"
-          srcSet="/images/contextual/dashboard-digital-health-480.webp 480w, /images/contextual/dashboard-digital-health.webp 1024w"
+          src="/images/contextual/family-home.webp"
+          srcSet="/images/contextual/family-home-480.webp 320w, /images/contextual/family-home.webp 683w"
           sizes="(max-width: 640px) calc(100vw - 2rem), 300px"
-          width={1024}
-          height={683}
+          width={683}
+          height={1024}
           alt=""
           className="dashboard-welcome__photo"
         />
@@ -363,9 +363,25 @@ export function DashboardPage() {
           <QuickAction icon="mood" label="Log Mood" color="var(--tertiary)" bg="var(--tertiary-fixed)" to="/mother-baby?tab=mood" />
           <QuickAction icon="biotech" label="Symptom AI" color="#7c3aed" bg="#ede9fe" to="/care?tab=symptoms" />
         </div>
+        <Link to="/family" className="dashboard-family-card">
+          <ContextPhoto
+            src="/images/contextual/family-outdoors.webp"
+            srcSet="/images/contextual/family-outdoors-480.webp 480w, /images/contextual/family-outdoors.webp 1024w"
+            sizes="(max-width: 640px) 88px, 128px"
+            width={1024}
+            height={683}
+            alt=""
+            className="dashboard-family-card__photo"
+          />
+          <div className="dashboard-family-card__copy">
+            <div className="dashboard-family-card__heading"><h2>Family care</h2><PremiumBadge /></div>
+            <p>Premium adds room for managed records and connected adults. Your existing records stay available.</p>
+          </div>
+          <span className="dashboard-family-card__action">Open family care <span aria-hidden="true">&rarr;</span></span>
+        </Link>
       </div>
 
-      {/* Today's tasks */}
+      {/* Today's care */}
         <div className="animate-fade-up delay-200" style={{ marginBottom: '2rem' }}>
 
           <div style={{
@@ -382,7 +398,7 @@ export function DashboardPage() {
               letterSpacing: '0.05em',
               textTransform: 'uppercase'
             }}>
-              Today's tasks
+              Today's care
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -414,7 +430,7 @@ export function DashboardPage() {
               <EmptyState
                 icon="check_circle"
                 title="All caught up!"
-                description="No tasks scheduled for today. Great work."
+                description="No care activities scheduled for today."
               />
             </Card>
           ) : (
