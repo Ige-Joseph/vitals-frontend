@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Badge, Button, Card, Input, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { api, ApiError } from '@/lib/api'
+import { PregnancyJourney } from './PregnancyJourney'
 import type { PregnancyTimeline } from './mother-baby.types'
 
 const BABY_SIZES: Record<number, string> = {
@@ -126,18 +128,16 @@ export function PregnancyTimelineView({ timeline, onReset }: { timeline: Pregnan
   const progress = Math.min(100, (currentWeek / 40) * 100)
   const babySize = getBabySize(currentWeek)
   const trimesterLabels = ['', 'First Trimester', 'Second Trimester', 'Third Trimester']
+  // Select only an illustration index from the current timeline week; it adds no clinical guidance.
+  const pregnancyMonth = Math.min(9, Math.max(1, Math.ceil(Math.min(40, Math.max(1, currentWeek)) * 9 / 40)))
+  const monthIllustration = `/images/contextual/baby-month-${String(pregnancyMonth).padStart(2, '0')}.webp`
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #c8d8ff 0%, #d8e8ff 50%, #e8f0ff 100%)',
-        borderRadius: 'var(--radius-2xl)', padding: '1.75rem', position: 'relative', overflow: 'hidden',
-      }}>
-        <div aria-hidden="true" style={{ position: 'absolute', right: -40, top: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', right: 20, top: 20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.25)' }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--secondary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Week {currentWeek}</p>
-          <h2 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '2.5rem', color: 'var(--on-surface)', lineHeight: 1.05 }}>Week {currentWeek}</h2>
+      <div className="pregnancy-stage-hero">
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--secondary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{trimesterLabels[trimester]}</p>
+          <h2 className="pregnancy-stage-hero__title" style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, color: 'var(--on-surface)', lineHeight: 1.05 }}>Week {currentWeek}</h2>
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9375rem', marginTop: '0.25rem' }}>You&apos;re {currentWeek} weeks pregnant · {weeksLeft} weeks to go</p>
           <div style={{ marginTop: '1rem', padding: '0.875rem 1rem', background: 'rgba(255,255,255,0.65)', borderRadius: 'var(--radius-xl)', backdropFilter: 'blur(8px)', maxWidth: 280 }}>
             <p style={{ fontSize: '0.9rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
@@ -145,10 +145,32 @@ export function PregnancyTimelineView({ timeline, onReset }: { timeline: Pregnan
             </p>
           </div>
         </div>
+        <div className="pregnancy-stage-hero__media">
+          <ContextPhoto
+            src="/images/contextual/pregnancy-context.webp"
+            srcSet="/images/contextual/pregnancy-context-480.webp 320w, /images/contextual/pregnancy-context.webp 683w"
+            sizes="(max-width: 640px) 160px, 220px"
+            width={683}
+            height={1024}
+            alt="A pregnant woman holding her belly."
+            className="pregnancy-stage-hero__photo"
+          />
+          <div className="pregnancy-stage-hero__art">
+            <ContextPhoto
+              key={pregnancyMonth}
+              src={monthIllustration}
+              width={776}
+              height={1179}
+              alt={`Pregnancy journey illustration for month ${pregnancyMonth}.`}
+              className="pregnancy-stage-hero__image"
+            />
+            <span className="pregnancy-stage-hero__month">Month {pregnancyMonth}</span>
+          </div>
+        </div>
       </div>
 
       {guidance ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
+        <div className="pregnancy-guidance">
           <Card style={{ padding: '1.125rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
               <span style={{ fontSize: '1.25rem' }} aria-hidden="true">👶</span>
@@ -174,7 +196,7 @@ export function PregnancyTimelineView({ timeline, onReset }: { timeline: Pregnan
           </div>
           <Badge variant="primary">T{trimester}</Badge>
         </div>
-        <div style={{ height: 8, background: 'var(--surface-container-high)', borderRadius: 99, overflow: 'hidden' }}>
+        <div role="progressbar" aria-label="Pregnancy timeline" aria-valuemin={0} aria-valuemax={40} aria-valuenow={Math.min(40, Math.max(0, currentWeek))} aria-valuetext={`Week ${currentWeek} of 40`} style={{ height: 8, background: 'var(--surface-container-high)', borderRadius: 99, overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${progress}%`, background: 'var(--gradient-primary)', borderRadius: 99, transition: 'width 0.6s ease' }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
@@ -190,48 +212,7 @@ export function PregnancyTimelineView({ timeline, onReset }: { timeline: Pregnan
         </div>
       </Card>
 
-      <Card style={{ padding: '1.25rem' }}>
-        <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.125rem', color: 'var(--on-surface)', marginBottom: '1.25rem' }}>Milestones</p>
-        <div style={{ position: 'relative' }}>
-          <div aria-hidden="true" style={{ position: 'absolute', left: 9, top: 0, bottom: 0, width: 2, background: 'var(--outline-variant)', zIndex: 0 }} />
-          {allMilestones.slice(0, 8).map(milestone => {
-            const passed = currentWeek > milestone.weekNumber
-            const current = Math.abs(currentWeek - milestone.weekNumber) <= 1 && !passed
-
-            return (
-              <div key={milestone.weekNumber} style={{ display: 'flex', gap: '1rem', marginBottom: '1.125rem', position: 'relative', alignItems: 'flex-start' }}>
-                <div aria-hidden="true" style={{
-                  width: 20, height: 20, borderRadius: '50%', flexShrink: 0, zIndex: 1, marginTop: 2,
-                  background: current ? 'var(--primary)' : passed ? 'var(--surface-container-high)' : 'white',
-                  border: `2px solid ${current ? 'var(--primary)' : 'var(--outline-variant)'}`,
-                  boxShadow: current ? '0 0 0 4px rgba(0,91,191,0.15)' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {passed ? <span className="material-symbols-outlined icon-filled" style={{ fontSize: 12, color: 'var(--outline)' }}>check</span> : null}
-                </div>
-                <div style={{ flex: 1, paddingBottom: '0.125rem' }}>
-                  <span style={{
-                    display: 'inline-block', padding: '0.125rem 0.5rem', borderRadius: 'var(--radius-full)',
-                    background: current ? 'var(--primary)' : 'var(--surface-container-high)',
-                    color: current ? 'white' : 'var(--on-surface-variant)', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.375rem',
-                  }}>Week {milestone.weekNumber}</span>
-                  {current ? (
-                    <div style={{ background: 'linear-gradient(135deg, #d0dcff 0%, #dce8ff 100%)', borderRadius: 'var(--radius-lg)', padding: '0.875rem', marginTop: '0.25rem' }}>
-                      <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--on-surface)', marginBottom: '0.25rem' }}>{milestone.title}</p>
-                      <p style={{ fontSize: '0.8125rem', color: 'var(--secondary)', lineHeight: 1.45 }}>{milestone.description}</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 600, fontSize: '0.9rem', color: passed ? 'var(--outline)' : 'var(--on-surface)' }}>{milestone.title}</p>
-                      {passed ? <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 600 }}>✓ Complete</span> : null}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Card>
+      <PregnancyJourney milestones={allMilestones} currentWeek={currentWeek} />
 
       {upcomingANCVisits.length > 0 ? (
         <Card style={{ padding: '1.25rem' }}>

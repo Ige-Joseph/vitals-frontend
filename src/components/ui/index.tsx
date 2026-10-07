@@ -3,12 +3,21 @@ import React from 'react'
 // ─── Spinner ────────────────────────────────────────────────
 export const Spinner = ({ size = 20, color = 'currentColor' }: { size?: number; color?: string }) => (
   <svg
+    className="loading-spinner"
     width={size} height={size}
     viewBox="0 0 24 24" fill="none"
     style={{ animation: 'spin 0.7s linear infinite', flexShrink: 0 }}
   >
     <circle cx="12" cy="12" r="10" stroke={color} strokeOpacity="0.2" strokeWidth="3" />
     <path d="M12 2a10 10 0 0 1 10 10" stroke={color} strokeWidth="3" strokeLinecap="round" />
+  </svg>
+)
+
+export const PasswordVisibilityIcon = ({ visible }: { visible: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z" />
+    <circle cx="12" cy="12" r="2.5" />
+    {!visible && <path d="m4 4 16 16" />}
   </svg>
 )
 

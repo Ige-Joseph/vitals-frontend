@@ -179,6 +179,7 @@ export function CalendarSettings({
 
   return (
     <CollapsibleCard title="Google Calendar" open={open} onToggle={onToggle} className="animate-fade-up delay-250">
+      <p className="integration-note">Google Calendar integration is coming soon.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: connected ? '#dcfce7' : 'var(--primary-fixed)', borderRadius: 'var(--radius-xl)' }}>
           <div style={{ display: 'flex', gap: '0.875rem', alignItems: 'flex-start' }}>
@@ -194,7 +195,7 @@ export function CalendarSettings({
               <p style={{ fontSize: '0.8125rem', color: accent, opacity: 0.85, marginTop: '0.25rem', lineHeight: 1.5 }}>
                 {connected
                   ? 'Your care reminders can now sync with Google Calendar.'
-                  : 'Connect Google Calendar so medication and pregnancy reminders can sync automatically.'}
+                  : 'Keep managing your care reminders in Vitals.'}
               </p>
               {summary?.accountEmail ? <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: accent, opacity: 0.85, wordBreak: 'break-word' }}>Connected as {summary.accountEmail}</p> : null}
             </div>
@@ -233,7 +234,7 @@ export function UsageSettings({
 
   const entries = [
     { label: 'Symptom checks', ...usage.symptomChecks },
-    { label: 'Drug detections', ...usage.drugDetections },
+    { label: 'Drug information checks', ...usage.drugDetections },
   ]
 
   return (

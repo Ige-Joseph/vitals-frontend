@@ -107,6 +107,9 @@ const refreshAccessToken = async (
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), 15_000)
+
     try {
       const res = await performFetch(
         '/api/v1/auth/refresh',
@@ -115,6 +118,7 @@ const refreshAccessToken = async (
           body: JSON.stringify(
             legacyRefreshToken ? { refreshToken: legacyRefreshToken } : {},
           ),
+          signal: controller.signal,
         },
         false,
       )
@@ -125,6 +129,7 @@ const refreshAccessToken = async (
     } catch {
       return null
     } finally {
+      window.clearTimeout(timeoutId)
       refreshPromise = null
     }
   })()

@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { api, ApiError } from '@/lib/api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { UpgradePrompt } from '@/components/billing/PremiumAccess'
 import { useBillingTier } from '@/hooks/useBillingStatus'
-import { PersonProfile } from './PersonProfile'
+import { PersonProfile } from '@/pages/profile/PersonProfile'
 import { InviteModal } from '@/components/family/InviteModal'
 import { PendingInvitations } from '@/components/family/PendingInvitations'
 import type {
@@ -13,7 +14,7 @@ import type {
 } from '@/components/family/invitation.types'
 
 /**
- * Family lives inside Profile, not as a sixth navigation item.
+ * Family is a dedicated care route, reached from the Dashboard family card.
  *
  * Two groupings, both always rendered: **Managed** are people with no Vitals
  * account of their own — a baby, a parent — whose records this account looks
@@ -190,6 +191,7 @@ export function FamilySection() {
   const [capacity, setCapacity] = useState<Capacity | null>(null)
   const [openPersonId, setOpenPersonId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [success, setSuccess] = useState('')
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [received, setReceived] = useState<ReceivedInvitation[]>([])
@@ -201,6 +203,7 @@ export function FamilySection() {
   const { tier } = useBillingTier()
 
   const load = async () => {
+    setLoadError('')
     try {
       const [list, cap, mine] = await Promise.all([
         api.get<PersonListEntry[]>('/api/v1/persons'),
@@ -239,8 +242,7 @@ export function FamilySection() {
         results.flatMap(r => (r.status === 'fulfilled' ? r.value : [])),
       )
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Could not load your family')
-      setPeople([])
+      setLoadError(e instanceof ApiError ? e.message : 'Could not load your family')
     }
   }
 
@@ -368,6 +370,17 @@ export function FamilySection() {
   }
 
   if (people === null) {
+    if (loadError) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <StatusBanner type="error" message={loadError} />
+          <Button variant="outline" size="sm" icon="refresh" onClick={() => void load()} style={{ alignSelf: 'flex-start' }}>
+            Try again
+          </Button>
+        </div>
+      )
+    }
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <Skeleton height={18} width="40%" />
@@ -395,6 +408,36 @@ export function FamilySection() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {error ? <StatusBanner type="error" message={error} /> : null}
       {success ? <StatusBanner type="success" message={success} /> : null}
+
+      <section className="family-context-panel" aria-label="Family care context">
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1rem', color: 'var(--on-surface)' }}>Family care</p>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--on-surface-variant)', lineHeight: 1.45, marginTop: '0.25rem' }}>
+            Managed records and connected adults, organized side by side.
+          </p>
+        </div>
+        <div className="family-context-panel__photos" aria-hidden="true">
+          <ContextPhoto
+            src="/images/contextual/family-outdoors.webp"
+            srcSet="/images/contextual/family-outdoors-480.webp 480w, /images/contextual/family-outdoors.webp 1024w"
+            sizes="(max-width: 640px) calc(100vw - 4rem), 380px"
+            width={1024}
+            height={683}
+            alt=""
+            className="family-context-panel__main"
+          />
+          <ContextPhoto
+            src="/images/contextual/family-home.webp"
+            srcSet="/images/contextual/family-home-480.webp 320w, /images/contextual/family-home.webp 683w"
+            sizes="(max-width: 640px) 120px, 150px"
+            width={683}
+            height={1024}
+            alt=""
+            className="family-context-panel__inset"
+            style={{ objectPosition: 'center 70%' }}
+          />
+        </div>
+      </section>
 
       <PendingInvitations
         received={received}

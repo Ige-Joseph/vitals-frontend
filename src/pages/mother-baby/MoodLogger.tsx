@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button, Card, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { api, ApiError } from '@/lib/api'
 import type { MoodLog, MoodOption } from './mother-baby.types'
 
@@ -26,13 +27,36 @@ export function MoodLogger() {
   const [logging, setLogging] = useState(false)
   const [insight, setInsight] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [loadingOptions, setLoadingOptions] = useState(true)
+  const [optionsError, setOptionsError] = useState('')
+  const [historyError, setHistoryError] = useState('')
+
+  const loadOptions = useCallback(async () => {
+    setLoadingOptions(true)
+    setOptionsError('')
+    try {
+      setOptions(await api.get<MoodOption>('/api/v1/mood/options'))
+    } catch (requestError) {
+      setOptionsError(requestError instanceof ApiError ? requestError.message : 'Could not load mood options. Please try again.')
+    } finally {
+      setLoadingOptions(false)
+    }
+  }, [])
+
+  const loadHistory = useCallback(async () => {
+    setHistoryError('')
+    try {
+      const response = await api.get<{ entries: MoodLog[] }>('/api/v1/mood/history?limit=5')
+      setHistory(response.entries)
+    } catch (requestError) {
+      setHistoryError(requestError instanceof ApiError ? requestError.message : 'Could not load recent mood entries. Please try again.')
+    }
+  }, [])
 
   useEffect(() => {
-    void api.get<MoodOption>('/api/v1/mood/options').then(setOptions).catch(() => undefined)
-    void api.get<{ entries: MoodLog[] }>('/api/v1/mood/history?limit=5')
-      .then(response => setHistory(response.entries))
-      .catch(() => undefined)
-  }, [])
+    void loadOptions()
+    void loadHistory()
+  }, [loadOptions, loadHistory])
 
   const handleLog = async () => {
     if (!selectedMood && !selectedCraving) {
@@ -50,8 +74,7 @@ export function MoodLogger() {
       setInsight(response.insight)
       setSelectedMood(null)
       setSelectedCraving(null)
-      const updatedHistory = await api.get<{ entries: MoodLog[] }>('/api/v1/mood/history?limit=5')
-      setHistory(updatedHistory.entries)
+      await loadHistory()
     } catch (requestError) {
       setError(requestError instanceof ApiError ? requestError.message : 'Failed to log mood')
     } finally {
@@ -61,6 +84,10 @@ export function MoodLogger() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <section className="mood-context-panel" aria-label="A moment for wellbeing">
+        <div><p className="feature-eyebrow">YOUR WELLBEING</p><h2>A moment for you</h2><p>A simple check-in with how you feel today.</p></div>
+        <ContextPhoto src="/images/contextual/mood-wellbeing.webp" width={512} height={768} alt="A pregnant woman resting her hands on her belly." className="mood-context-panel__photo" />
+      </section>
       <Card style={{ padding: '1.25rem' }}>
         <h3 style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>How are you feeling?</h3>
         <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>Log your mood and cravings — instant guidance follows.</p>
@@ -75,7 +102,14 @@ export function MoodLogger() {
           </div>
         ) : null}
 
-        {options ? (
+        {loadingOptions ? (
+          <p role="status" style={{ color: 'var(--on-surface-variant)', fontSize: '0.875rem' }}>Loading mood options...</p>
+        ) : optionsError ? (
+          <div>
+            <div style={{ marginBottom: '0.75rem' }}><StatusBanner type="error" message={optionsError} /></div>
+            <Button variant="outline" size="sm" onClick={() => void loadOptions()}>Try again</Button>
+          </div>
+        ) : options ? (
           <>
             <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '0.625rem' }}>Mood</p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}>
@@ -116,7 +150,13 @@ export function MoodLogger() {
         ) : null}
       </Card>
 
-      {history.length > 0 ? (
+      {historyError ? (
+        <Card style={{ padding: '1.25rem' }}>
+          <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.9375rem', marginBottom: '0.75rem' }}>Recent entries unavailable</p>
+          <div style={{ marginBottom: '0.75rem' }}><StatusBanner type="error" message={historyError} /></div>
+          <Button variant="outline" size="sm" onClick={() => void loadHistory()}>Try again</Button>
+        </Card>
+      ) : history.length > 0 ? (
         <Card style={{ padding: '1.25rem' }}>
           <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.9375rem', marginBottom: '1rem' }}>Recent entries</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>

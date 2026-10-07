@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useState, type FormEvent } from 'react'
-import { Badge, Button, Card, Input, Skeleton, StatusBanner } from '@/components/ui'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { Badge, Button, Card, EmptyState, Input, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { api, ApiError } from '@/lib/api'
 import type { BabyPlan } from './mother-baby.types'
 
@@ -35,7 +36,21 @@ function BabySetupForm({ onSuccess }: BabySetupFormProps) {
 
   return (
     <Card style={{ padding: '2rem' }}>
-      <h2 style={{ fontWeight: 700 }}>Create baby profile</h2>
+      <div className="baby-profile-card__layout">
+        <div>
+          <h2 style={{ fontWeight: 700 }}>Create baby profile</h2>
+          <p style={{ marginTop: '0.375rem', color: 'var(--on-surface-variant)', fontSize: '0.875rem', lineHeight: 1.5 }}>Set up a profile to keep the vaccination schedule together.</p>
+        </div>
+        <ContextPhoto
+          src="/images/contextual/baby-newborn.webp"
+          srcSet="/images/contextual/baby-newborn-480.webp 480w, /images/contextual/baby-newborn.webp 1024w"
+          sizes="(max-width: 640px) calc(100vw - 4rem), 240px"
+          width={1024}
+          height={683}
+          alt="A sleeping newborn, shown as contextual imagery."
+          className="baby-profile-card__image"
+        />
+      </div>
       {error ? <div style={{ marginTop: '1rem' }}><StatusBanner type="error" message={error} /></div> : null}
 
       <form onSubmit={handleSubmit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -69,19 +84,32 @@ function BabyTimeline({ plan, onReset }: { plan: BabyPlan; onReset: () => void }
         background: 'linear-gradient(135deg, #dbeafe 0%, #eef6ff 100%)',
         borderRadius: 'var(--radius-2xl)',
       }}>
-        <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Baby profile</p>
-        <h2 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', marginTop: '0.25rem' }}>
-          {babyName}&apos;s vaccination journey
-        </h2>
-        {deliveryDate ? (
-          <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginTop: '0.35rem' }}>
-            Born on {new Date(deliveryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        ) : null}
-        <div style={{ marginTop: '1rem', padding: '0.875rem', background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-xl)' }}>
-          <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
-            Vaccination reminders are scheduled before each due date to help you stay on track.
-          </p>
+        <div className="baby-profile-card__layout">
+          <div>
+            <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase' }}>Baby profile</p>
+            <h2 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: '1.5rem', marginTop: '0.25rem' }}>
+              {babyName}&apos;s vaccination journey
+            </h2>
+            {deliveryDate ? (
+              <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginTop: '0.35rem' }}>
+                Born on {new Date(deliveryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            ) : null}
+            <div style={{ marginTop: '1rem', padding: '0.875rem', background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-xl)' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', lineHeight: 1.5 }}>
+                Vaccination reminders are scheduled before each due date to help you stay on track.
+              </p>
+            </div>
+          </div>
+          <ContextPhoto
+            src="/images/contextual/baby-newborn.webp"
+            srcSet="/images/contextual/baby-newborn-480.webp 480w, /images/contextual/baby-newborn.webp 1024w"
+            sizes="(max-width: 640px) calc(100vw - 4rem), 240px"
+            width={1024}
+            height={683}
+            alt="A sleeping newborn, shown as contextual imagery."
+            className="baby-profile-card__image"
+          />
         </div>
       </Card>
 
@@ -144,15 +172,21 @@ export function BabySection() {
   const [resetting, setResetting] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
 
-  useEffect(() => {
-    void api.get<BabyPlan[]>('/api/v1/mother-baby/baby-profile')
-      .then(setPlans)
-      .catch(requestError => {
-        setError(requestError instanceof ApiError ? requestError.message : 'Failed to load the baby profile.')
-      })
-      .finally(() => setLoading(false))
+  const load = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      setPlans(await api.get<BabyPlan[]>('/api/v1/mother-baby/baby-profile'))
+    } catch (requestError) {
+      setLoadError(requestError instanceof ApiError ? requestError.message : 'Failed to load the baby profile.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { void load() }, [load])
 
   const handleReset = async () => {
     setResetting(true)
@@ -170,6 +204,12 @@ export function BabySection() {
   }
 
   if (loading) return <Skeleton height={200} />
+
+  if (loadError) {
+    return <Card style={{ padding: '2rem' }}>
+      <EmptyState icon="wifi_off" title="Couldn't load the baby profile" description={loadError} action={<Button icon="refresh" onClick={() => void load()}>Try again</Button>} />
+    </Card>
+  }
 
   if (plans.length === 0 || showForm) {
     return (

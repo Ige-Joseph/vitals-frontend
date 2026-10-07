@@ -80,11 +80,13 @@ body {
 
 h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+/* Consistent, usable scrolling for pages and dialog bodies. */
+* { scrollbar-width: thin; scrollbar-color: var(--outline) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: var(--outline); }
+::-webkit-scrollbar-thumb { background: var(--outline); border: 2px solid transparent; background-clip: padding-box; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background-color: var(--on-surface-variant); }
+[role="dialog"] { max-height: calc(100dvh - 2rem); min-width: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-gutter: stable; }
 
 /* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -108,6 +110,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Hide ligature names until the icon font is ready, and keep them hidden if
+   the external font fails. This avoids exposing words such as "mail" or
+   "visibility" as fallback icon text. */
+html:not([data-material-symbols="ready"]) .material-symbols-outlined {
+  font-size: 0 !important;
 }
 
 
@@ -180,6 +189,23 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
 .animate-spin      { animation: spin 0.8s linear infinite; }
 .animate-bounce-subtle { animation: bounceSubtle 2s ease infinite; }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Keep motion that communicates an active load in progress. */
+  .loading-spinner {
+    animation-duration: 0.9s !important;
+    animation-iteration-count: infinite !important;
+  }
+}
+
 /* Skeleton shimmer */
 .skeleton {
   background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
@@ -229,6 +255,140 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
 }
 .input-base::placeholder { color: var(--outline); }
 
+/* Contextual feature photography; opacity is never required for visibility. */
+.context-photo {
+  display: block;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center;
+  animation: context-photo-reveal 280ms ease-out both;
+  transition: transform 240ms ease, opacity 280ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .context-photo:hover { transform: translateY(-2px); }
+}
+
+.auth-hero__photos,
+.auth-hero__photo-wash { position: absolute; inset: 0; }
+.auth-hero__photos { z-index: 0; overflow: hidden; }
+.auth-hero__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 2.2s ease-in-out;
+}
+.auth-hero__photo.is-active { opacity: 1; }
+.auth-hero__photo-wash {
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(9, 42, 93, 0.28), rgba(6, 38, 88, 0.62));
+  pointer-events: none;
+}
+.auth-hero__copy {
+  margin-right: 0.5rem;
+  padding: clamp(1rem, 2.2vw, 1.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: var(--radius-2xl);
+  background: rgba(8, 40, 87, 0.82);
+  box-shadow: 0 18px 44px rgba(6, 24, 53, 0.22), inset 0 1px rgba(255, 255, 255, 0.15);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .auth-hero__copy { background: rgba(8, 40, 87, 0.34); backdrop-filter: blur(15px) saturate(125%); }
+}
+.auth-hero__features > div { border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 8px 22px rgba(6,24,53,0.16); }
+.auth-hero__logo > div { box-shadow: 0 8px 24px rgba(6,24,53,0.2); }
+.auth-form-panel { min-width: 0; }
+
+.family-back-link { color: var(--primary); font-size: .875rem; font-weight: 700; text-decoration: none; padding: .625rem 0; }
+.family-back-link:hover { text-decoration: underline; }
+.family-page { max-width: 850px; margin: auto; padding: clamp(1rem, 4vw, 2rem); }
+.family-page-heading { margin: 1rem 0 1.5rem; }
+.family-page-heading h1 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; }
+.family-page-heading p { color: var(--on-surface-variant); line-height: 1.6; max-width: 38rem; margin-top: .5rem; }
+.integration-note { padding: .875rem 1rem; margin-bottom: 1rem; border-left: 3px solid var(--primary); background: var(--surface-container-low); border-radius: var(--radius-md); font-size: .8125rem; line-height: 1.65; color: var(--on-surface-variant); }
+.dashboard-welcome { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 30%); align-items: center; gap: 1.5rem; }
+.dashboard-welcome__copy { min-width: 0; }
+.dashboard-welcome__photo { width: 100%; height: auto; aspect-ratio: 1.65; object-position: center 44%; border-radius: var(--radius-xl); }
+.medications-page-header { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.medications-header-photo { width: 100%; height: auto; aspect-ratio: 1.8; border-radius: var(--radius-xl); object-position: center 73%; }
+.medications-embedded-header { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+.medications-embedded-header > :last-child { justify-self: end; }
+.drug-scan-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, 30%); align-items: center; gap: 1.25rem; }
+.drug-scan-intro__photo { width: 100%; height: auto; aspect-ratio: 1.55; border-radius: var(--radius-xl); object-position: center 20%; }
+.symptom-context-photo { width: 100%; height: clamp(120px, 20vw, 170px); margin-bottom: 1rem; border-radius: var(--radius-xl); object-position: center 54%; }
+.pregnancy-stage-hero { display: grid; grid-template-columns: minmax(0, 1fr) 220px; align-items: center; gap: 1.5rem; border-radius: var(--radius-2xl); padding: 1.5rem; background: linear-gradient(135deg, #d8e4ff, #edf4ff); overflow: hidden; }
+.pregnancy-stage-hero__media { position: relative; min-width: 0; width: 100%; aspect-ratio: .72; }
+.pregnancy-stage-hero__photo { width: 100%; height: 100%; border-radius: var(--radius-xl); object-position: center 42%; }
+.pregnancy-stage-hero__art { position: absolute; left: -1rem; bottom: -.5rem; display: grid; justify-items: center; width: 90px; padding: .35rem; border: 1px solid white; border-radius: var(--radius-xl); background: rgba(255,255,255,.92); box-shadow: var(--shadow-sm); }
+.pregnancy-stage-hero__image { display: block; width: 100%; height: auto; aspect-ratio: 776 / 1179; object-fit: contain; }
+.pregnancy-stage-hero__month { padding: .2rem; color: var(--primary); font-size: .6875rem; font-weight: 700; line-height: 1.3; text-align: center; }
+.pregnancy-stage-hero__title { font-size: clamp(1.8rem, 6vw, 2.5rem); }
+.pregnancy-guidance { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .875rem; }
+.pregnancy-journey { list-style: none; margin: 1rem 0 0; padding: 0; }
+.pregnancy-journey li { position: relative; padding: 0 0 1.25rem 1.5rem; border-left: 2px solid var(--outline-variant); margin-left: .4rem; }
+.pregnancy-journey li:last-child { border-color: transparent; padding-bottom: 0; }
+.pregnancy-journey li::before { content: ''; position: absolute; left: -6px; top: .35rem; width: 10px; height: 10px; border: 2px solid var(--outline); background: var(--surface-container-lowest); border-radius: 50%; }
+.pregnancy-journey li[data-current=true]::before { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-fixed); }
+.pregnancy-journey__content { padding: .875rem 1rem; border-radius: var(--radius-lg); background: var(--surface-container-low); }
+.pregnancy-journey li[data-current=true] .pregnancy-journey__content { background: var(--primary-fixed); }
+.pregnancy-journey__meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; font-size: .75rem; color: var(--primary); font-weight: 700; margin-bottom: .5rem; }
+.pregnancy-journey h3 { font-size: .9375rem; font-weight: 700; }
+.pregnancy-journey p { font-size: .875rem; color: var(--on-surface-variant); line-height: 1.6; margin-top: .375rem; }
+.appointments-empty-photo { width: 100%; height: auto; aspect-ratio: 2 / 1; max-height: 16rem; border-radius: var(--radius-xl); margin-bottom: 1.25rem; object-position: center 43%; }
+.baby-profile-card__layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(190px, 38%); align-items: center; gap: 1.25rem; }
+.baby-profile-card__image { width: 100%; height: auto; aspect-ratio: 1.5; border-radius: var(--radius-xl); object-position: center 42%; }
+.family-context-panel { display: grid; grid-template-columns: minmax(0, 1fr) 45%; align-items: center; gap: 1.5rem; padding: 1.25rem; border: 1px solid var(--outline-variant); border-radius: var(--radius-2xl); background: var(--surface-container-low); }
+.family-context-panel__photos { position: relative; padding: 0 2.5rem 1.25rem 0; }
+.family-context-panel__main { width: 100%; height: auto; aspect-ratio: 1.4; border-radius: var(--radius-xl); }
+.family-context-panel__inset { position: absolute; right: 0; bottom: 0; width: 38%; height: auto; aspect-ratio: .78; object-position: center 70%; border: 3px solid var(--surface-container-low); border-radius: var(--radius-lg); }
+.mood-context-panel { display: grid; grid-template-columns: minmax(0, 1fr) 130px; gap: 1rem; align-items: center; padding: 1rem 1.25rem; border-radius: var(--radius-xl); background: var(--surface-container-low); }
+.mood-context-panel h2 { font-size: 1.25rem; font-weight: 700; margin: .25rem 0; }
+.mood-context-panel p { font-size: .875rem; line-height: 1.6; color: var(--on-surface-variant); }
+.mood-context-panel .feature-eyebrow { font-size: .6875rem; font-weight: 700; letter-spacing: .08em; color: var(--primary); }
+.mood-context-panel__photo { width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-xl); object-position: center 45%; }
+
+@keyframes context-photo-reveal {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .dashboard-welcome { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .dashboard-welcome__photo { aspect-ratio: 2.5; max-height: 150px; object-position: center 36%; }
+  .medications-page-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .medications-page-header .medications-header-photo { grid-column: 1 / -1; grid-row: 2; max-height: 130px; }
+  .medications-embedded-header { grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; }
+  .medications-embedded-header .medications-header-photo { aspect-ratio: 1.6; }
+  .drug-scan-intro { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .drug-scan-intro__photo { aspect-ratio: 2.4; max-height: 150px; }
+  .pregnancy-stage-hero { grid-template-columns: minmax(0, 1fr); padding: 1.25rem; gap: 1.25rem; }
+  .pregnancy-stage-hero__media { width: 160px; aspect-ratio: .8; justify-self: center; margin-bottom: .5rem; }
+  .pregnancy-stage-hero__art { width: 85px; left: auto; right: -3rem; }
+  .pregnancy-guidance { grid-template-columns: minmax(0, 1fr); }
+  .baby-profile-card__layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .baby-profile-card__image { aspect-ratio: 1.8; max-height: 190px; }
+  .family-context-panel { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .family-context-panel__photos { max-width: 380px; width: 100%; justify-self: center; }
+  .family-context-panel__main { aspect-ratio: 1.8; }
+  .family-context-panel__inset { width: 30%; }
+  .mood-context-panel { grid-template-columns: minmax(0, 1fr) 100px; padding: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context-photo { animation: none !important; transition: none !important; }
+  .auth-hero__photo { transition: none !important; }
+  .pregnancy-stage-hero__art { transition: none !important; }
+  .context-photo:hover, .pregnancy-stage-hero__art:hover { transform: none !important; }
+}
+
+@media (max-width: 800px) {
+  .auth-page { flex-direction: column; }
+  .auth-form-panel { flex: 1; align-items: flex-start !important; padding: 1.5rem 1.25rem 2rem !important; }
+  .auth-hero__photo { object-position: center 32% !important; }
+}
+
 
 @keyframes voiceWave {
   from {
@@ -250,3 +410,27 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-headline); }
 .delay-300 { animation-delay: 0.3s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
+
+.care-tabs { min-width: 0; }
+.care-tabs button { min-width: 0; min-height: 44px; }
+.tab-label-compact { display: none; }
+@media (max-width: 639px) {
+  .care-tabs button { flex-direction: column; gap: .25rem !important; }
+  .tab-label-text { display: none; }
+  .tab-label-compact { display: block; font-size: .625rem; line-height: 1.3; white-space: nowrap; }
+}
+
+.dashboard-family-card { display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; align-items: center; gap: 1.25rem; margin-top: 1rem; padding: 1rem; border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); background: var(--surface-container-lowest); box-shadow: var(--shadow-sm); color: var(--on-surface); text-decoration: none; transition: border-color .15s, box-shadow .15s; }
+.dashboard-family-card__photo { width: 100%; height: auto; aspect-ratio: 1.2; object-position: center 45%; border-radius: var(--radius-lg); }
+.dashboard-family-card__copy { min-width: 0; }
+.dashboard-family-card__heading { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem; margin-bottom: .5rem; }
+.dashboard-family-card h2 { font-size: 1rem; font-weight: 700; }
+.dashboard-family-card p { color: var(--on-surface-variant); font-size: .8125rem; line-height: 1.6; max-width: 28rem; }
+.dashboard-family-card__action { color: var(--primary); font-size: .8125rem; font-weight: 700; white-space: nowrap; }
+.dashboard-family-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); }
+.dashboard-family-card:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .dashboard-family-card { grid-template-columns: 88px minmax(0, 1fr); gap: .875rem; }
+  .dashboard-family-card__photo { aspect-ratio: .85; }
+  .dashboard-family-card__action { grid-column: 2; }
+}

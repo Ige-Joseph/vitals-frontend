@@ -11,7 +11,10 @@ credentials, and database encryption must be reviewed separately.
 ### Article rendering
 
 Article content is rendered as escaped React text nodes. The supported content
-format is plain text with `**bold**` emphasis and line breaks. Do not reintroduce
+format is plain text with `**bold**` emphasis, paragraphs, headings, and flat
+ordered/unordered lists. Raw HTML remains escaped text; no HTML or script is
+executed. Article images accept only HTTP(S) URLs and fall back safely on errors.
+Do not reintroduce
 `dangerouslySetInnerHTML` without a maintained HTML sanitizer and a documented
 allowlist.
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Card, EmptyState, Skeleton, StatusBanner } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
 import { DailyQuotaStatus } from '@/components/billing/PremiumAccess'
 import { useBillingTier, useDailyUsage } from '@/hooks/useBillingStatus'
 import { api, ApiError } from '@/lib/api'
@@ -29,18 +30,20 @@ function DrugHistory() {
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
 
   const load = useCallback(async (requestedPage: number) => {
     setLoading(true)
+    setLoadError('')
     try {
       const response = await api.get<{ entries: DrugEntry[]; pagination: Pagination }>(
         `/api/v1/drug-detection/history?page=${requestedPage}&limit=10`,
       )
       setEntries(response.entries)
       setPagination(response.pagination)
-    } catch {
-      // The empty state remains usable when history cannot be loaded.
+    } catch (requestError) {
+      setLoadError(requestError instanceof ApiError ? requestError.message : 'Could not load drug information history. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -58,8 +61,12 @@ function DrugHistory() {
     )
   }
 
+  if (loadError) {
+    return <EmptyState icon="wifi_off" title="Couldn't load drug information history" description={loadError} action={<Button icon="refresh" onClick={() => void load(page)}>Try again</Button>} />
+  }
+
   if (entries.length === 0) {
-    return <EmptyState icon="history" title="No drug scans yet" description="Your past AI medication identification results will appear here." />
+    return <EmptyState icon="history" title="No drug information yet" description="Your previous medication information results will appear here." />
   }
 
   return (
@@ -221,7 +228,7 @@ export function DrugDetection() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div role="tablist" aria-label="Drug identification views" style={{ display: 'flex', gap: '0.375rem', background: 'var(--surface-container)', borderRadius: 'var(--radius-xl)', padding: '0.25rem' }}>
+      <div role="tablist" aria-label="Drug information views" style={{ display: 'flex', gap: '0.375rem', background: 'var(--surface-container)', borderRadius: 'var(--radius-xl)', padding: '0.25rem' }}>
         {(['scan', 'history'] as const).map(option => (
           <button
             key={option}
@@ -238,7 +245,7 @@ export function DrugDetection() {
               boxShadow: view === option ? 'var(--shadow-sm)' : 'none',
             }}
           >
-            {option === 'scan' ? 'New scan' : 'History'}
+            {option === 'scan' ? 'New check' : 'History'}
           </button>
         ))}
       </div>
@@ -246,7 +253,7 @@ export function DrugDetection() {
       {view === 'scan' ? (
         <>
           <DailyQuotaStatus
-            label="Drug scans"
+            label="Drug information checks"
             used={detectionUsage?.used}
             limit={detectionUsage?.limit}
             tier={tier}
@@ -255,34 +262,49 @@ export function DrugDetection() {
             limitMessage={quotaMessage || undefined}
           />
           <Card style={{ padding: '1.25rem' }}>
-            <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>Drug identification</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)', marginBottom: '1.25rem' }}>Upload a clear photo of a medication label or packaging.</p>
-            <button
-              type="button"
-              onDragOver={event => event.preventDefault()}
-              onDrop={event => {
-                event.preventDefault()
-                const droppedFile = event.dataTransfer.files[0]
-                if (droppedFile) handleFile(droppedFile)
-              }}
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                display: 'block', width: '100%', border: `2px dashed ${preview ? 'var(--primary)' : 'var(--outline-variant)'}`,
-                borderRadius: 'var(--radius-xl)', padding: '2rem', textAlign: 'center',
-                cursor: 'pointer', background: preview ? 'var(--primary-fixed)' : 'var(--surface-container-low)',
-                transition: 'all 0.2s',
-              }}
-            >
-              {preview ? (
-                <img src={preview} alt="Selected medication" style={{ maxHeight: 160, maxWidth: '100%', objectFit: 'contain', borderRadius: 'var(--radius-lg)' }} />
-              ) : (
-                <>
-                  <span className="material-symbols-outlined icon-xl" style={{ color: 'var(--outline)', marginBottom: '0.5rem' }} aria-hidden="true">add_photo_alternate</span>
-                  <span style={{ display: 'block', fontFamily: 'var(--font-headline)', fontWeight: 600, color: 'var(--on-surface)', fontSize: '0.9375rem' }}>Tap to upload image</span>
-                  <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--outline)', marginTop: '0.25rem' }}>JPEG, PNG or WebP · max 5MB</span>
-                </>
-              )}
-            </button>
+            <div className="drug-scan-intro">
+              <div>
+                <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>Drug Information</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>Upload a clear photo of a medication label or packaging.</p>
+              </div>
+              <ContextPhoto
+                src="/images/contextual/drug-package-context.webp"
+                srcSet="/images/contextual/drug-package-context-480.webp 320w, /images/contextual/drug-package-context.webp 683w"
+                sizes="(max-width: 640px) calc(100vw - 4rem), 220px"
+                width={683}
+                height={1024}
+                alt=""
+                className="drug-scan-intro__photo"
+              />
+            </div>
+            <div style={{ marginTop: '1.25rem' }}>
+              <button
+                type="button"
+                onDragOver={event => event.preventDefault()}
+                onDrop={event => {
+                  event.preventDefault()
+                  const droppedFile = event.dataTransfer.files[0]
+                  if (droppedFile) handleFile(droppedFile)
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  display: 'block', width: '100%', border: `2px dashed ${preview ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                  borderRadius: 'var(--radius-xl)', padding: '2rem', textAlign: 'center',
+                  cursor: 'pointer', background: preview ? 'var(--primary-fixed)' : 'var(--surface-container-low)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {preview ? (
+                  <img src={preview} alt="Selected medication" style={{ maxHeight: 160, maxWidth: '100%', objectFit: 'contain', borderRadius: 'var(--radius-lg)' }} />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined icon-xl" style={{ color: 'var(--outline)', marginBottom: '0.5rem' }} aria-hidden="true">add_photo_alternate</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-headline)', fontWeight: 600, color: 'var(--on-surface)', fontSize: '0.9375rem' }}>Tap to upload image</span>
+                    <span style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--outline)', marginTop: '0.25rem' }}>JPEG, PNG or WebP · max 5MB</span>
+                  </>
+                )}
+              </button>
+            </div>
             <input
               ref={fileInputRef}
               type="file"
@@ -296,7 +318,7 @@ export function DrugDetection() {
             {error ? <div style={{ marginTop: '0.875rem' }}><StatusBanner type="error" message={error} /></div> : null}
             {file ? (
               <Button onClick={handleDetect} loading={loading} style={{ width: '100%', marginTop: '1rem' }} disabled={quotaReached || !file} icon="biotech">
-                {loading ? 'Analysing image…' : 'Identify medication'}
+                {loading ? 'Analysing image…' : 'Get medication information'}
               </Button>
             ) : null}
           </Card>
@@ -340,7 +362,7 @@ export function DrugDetection() {
                 ) : null}
                 <p style={{ fontSize: '0.75rem', color: 'var(--outline)', lineHeight: 1.5 }}>{result.disclaimer}</p>
               </Card>
-              <Button variant="ghost" size="sm" onClick={() => setView('history')} icon="history">View scan history</Button>
+              <Button variant="ghost" size="sm" onClick={() => setView('history')} icon="history">View drug information history</Button>
             </div>
           ) : null}
         </>

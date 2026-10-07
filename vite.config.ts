@@ -22,8 +22,7 @@ export default defineConfig({
         scope: '/',
         lang: 'en',
         categories: ['health', 'medical', 'lifestyle'],
-        // SVG icons are placeholders — replace with PNG when you have real assets.
-        // Required for full install: 192x192.png and 512x512.png (maskable).
+        // The PNG icons below are the install icons; SVG variants remain for shortcuts.
         icons: [
           {
             src: '/icons/icon-192x192.png',
@@ -45,7 +44,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
-        globIgnores: ['firebase-messaging-sw.js'],
+        globIgnores: ['firebase-messaging-sw.js', '**/images/contextual/**'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/admin/, /^\/api/],
         runtimeCaching: [
@@ -58,6 +57,11 @@ export default defineConfig({
             urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
             handler: 'CacheFirst',
             options: { cacheName: 'gstatic-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 31536000 } }
+          },
+          {
+            urlPattern: /\/images\/contextual\//,
+            handler: 'CacheFirst',
+            options: { cacheName: 'vitals-context-images', expiration: { maxEntries: 30, maxAgeSeconds: 2592000 } }
           }
         ]
       },

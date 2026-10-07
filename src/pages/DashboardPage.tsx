@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { api, ApiError } from '@/lib/api'
 import { Card, Badge, Skeleton, EmptyState, Button } from '@/components/ui'
+import { ContextPhoto } from '@/components/ui/ContextPhoto'
+import { PremiumBadge } from '@/components/billing/PremiumAccess'
 
 interface DashboardData {
   todayTasks: CareEvent[]
@@ -99,7 +101,7 @@ function PersonSwitcher({
               {RELATIONSHIP_ICON[person.relationship]}
             </span>
             {person.displayName}
-            {person.upcomingTasks > 0 && <span aria-label={`${person.upcomingTasks} upcoming tasks`}>
+            {person.upcomingTasks > 0 && <span aria-label={`${person.upcomingTasks} upcoming care activities`}>
               {person.upcomingTasks}
             </span>}
           </button>
@@ -131,21 +133,18 @@ const STATUS_CONFIG = {
   MISSED:   { label: 'Missed',  color: 'var(--error)',     bg: 'var(--error-container)' },
 }
 
-function TaskCard({ event, onAction }: { event: CareEvent; onAction: (id: string, status: 'DONE' | 'SKIPPED') => void }) {
+function TaskCard({ event, onAction }: { event: CareEvent; onAction: (id: string, status: 'DONE' | 'SKIPPED') => Promise<void> }) {
   const [acting, setActing] = useState(false)
   const icon = EVENT_TYPE_ICON[event.eventType] ?? EVENT_TYPE_ICON.default
   const cfg  = STATUS_CONFIG[event.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.PENDING
   const time  = new Date(event.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const [removing, setRemoving] = useState(false)
-
   const handle = async (status: 'DONE' | 'SKIPPED') => {
     setActing(true)
-    setRemoving(true)
-
-    setTimeout(() => {
-      onAction(event.id, status)
+    try {
+      await onAction(event.id, status)
+    } finally {
       setActing(false)
-    }, 400)
+    }
   }
 
 return (
@@ -163,13 +162,7 @@ return (
         ? '3px solid #16a34a'
         : '3px solid transparent',
 
-    opacity: removing ? 0 : event.status === 'DONE' ? 0.7 : 1,
-    transform: removing ? 'translateX(16px) scale(0.98)' : 'translateX(0) scale(1)',
-    maxHeight: removing ? 0 : 140,
-    paddingTop: removing ? 0 : '1.125rem',
-    paddingBottom: removing ? 0 : '1.125rem',
-    overflow: 'hidden',
-    transition: 'opacity 0.2s ease, transform 0.2s ease, max-height 0.25s ease, padding 0.25s ease',
+    opacity: event.status === 'DONE' ? 0.7 : 1,
   }}>
       <div style={{ width: 44, height: 44, borderRadius: 'var(--radius-lg)', background: `${cfg.bg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <span className="material-symbols-outlined" style={{ color: cfg.color, fontSize: 22 }}>{icon}</span>
@@ -180,17 +173,17 @@ return (
       </div>
       {event.status === 'PENDING' ? (
         <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-          <button onClick={() => handle('DONE')} disabled={acting} style={{
+          <button aria-label={`Mark ${event.title} done`} aria-busy={acting} onClick={() => void handle('DONE')} disabled={acting} style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: '#dcfce7', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: acting ? 0.6 : 1, pointerEvents: acting ? 'none' : 'auto',
           }}>
-            <span className="material-symbols-outlined icon-sm">check</span>
+            <span className="material-symbols-outlined icon-sm">{acting ? 'hourglass_top' : 'check'}</span>
           </button>
-          <button onClick={() => handle('SKIPPED')} disabled={acting} style={{
+          <button aria-label={`Skip ${event.title}`} aria-busy={acting} onClick={() => void handle('SKIPPED')} disabled={acting} style={{
             width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
             background: 'var(--surface-container-high)', color: 'var(--on-surface-variant)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', opacity: acting ? 0.6 : 1, pointerEvents: acting ? 'none' : 'auto',
           }}>
-            <span className="material-symbols-outlined icon-sm">close</span>
+            <span className="material-symbols-outlined icon-sm">{acting ? 'hourglass_top' : 'close'}</span>
           </button>
         </div>
       ) : (
@@ -286,21 +279,20 @@ export function DashboardPage() {
   }, [selectedPersonId])
 
   const updateEventStatus = async (id: string, status: 'DONE' | 'SKIPPED') => {
-    setData(prev => {
-      if (!prev) return prev
-
-      return {
-        ...prev,
-        todayTasks: prev.todayTasks.filter(e => e.id !== id),
-        upcomingReminders: prev.upcomingReminders.filter(e => e.id !== id),
-      }
-    })
-
     try {
       await api.patch(`/api/v1/care/events/${id}/status`, { status })
+      setData(prev => {
+        if (!prev) return prev
+
+        return {
+          ...prev,
+          todayTasks: prev.todayTasks.filter(e => e.id !== id),
+          upcomingReminders: prev.upcomingReminders.filter(e => e.id !== id),
+        }
+      })
     } catch (err) {
-      console.error(err)
-      load()
+      await load()
+      setError(err instanceof ApiError ? err.message : 'Could not update this reminder. Please try again.')
     }
   }
 
@@ -326,7 +318,8 @@ export function DashboardPage() {
 
       {/* Header */}
       {data && <PersonSwitcher people={data.people} subject={data.subject} onSelect={selectPerson} />}
-      <div className="animate-fade-up" style={{ marginBottom: '2rem' }}>
+      <div className="dashboard-welcome animate-fade-up" style={{ marginBottom: '2rem' }}>
+        <div className="dashboard-welcome__copy">
         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--outline)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{today}</p>
         <h1 style={{ fontFamily: 'var(--font-headline)', fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: 'var(--on-surface)', lineHeight: 1.2 }}>
           {data && !data.subject.isSelf
@@ -335,7 +328,7 @@ export function DashboardPage() {
         </h1>
         {pendingCount > 0 && (
           <p style={{ color: 'var(--on-surface-variant)', fontSize: '0.9375rem', marginTop: '0.375rem' }}>
-           You have <strong style={{ color: 'var(--primary)' }}>{pendingCount} task{pendingCount > 1 ? 's' : ''}</strong> remaining today
+           You have <strong style={{ color: 'var(--primary)' }}>{pendingCount} care activit{pendingCount === 1 ? 'y' : 'ies'}</strong> remaining today
             {totalTasks > 0 && (
               <>
                 {' '}— {completedTasks} of {totalTasks} completed.
@@ -349,6 +342,16 @@ export function DashboardPage() {
             <span style={{ fontSize: '0.875rem', color: 'var(--tertiary)', fontWeight: 500 }}>Please verify your email to enable all features.</span>
           </div>
         )}
+        </div>
+        <ContextPhoto
+          src="/images/contextual/family-home.webp"
+          srcSet="/images/contextual/family-home-480.webp 320w, /images/contextual/family-home.webp 683w"
+          sizes="(max-width: 640px) calc(100vw - 2rem), 300px"
+          width={683}
+          height={1024}
+          alt=""
+          className="dashboard-welcome__photo"
+        />
       </div>
 
       {/* Quick actions */}
@@ -360,9 +363,25 @@ export function DashboardPage() {
           <QuickAction icon="mood" label="Log Mood" color="var(--tertiary)" bg="var(--tertiary-fixed)" to="/mother-baby?tab=mood" />
           <QuickAction icon="biotech" label="Symptom AI" color="#7c3aed" bg="#ede9fe" to="/care?tab=symptoms" />
         </div>
+        <Link to="/family" className="dashboard-family-card">
+          <ContextPhoto
+            src="/images/contextual/family-outdoors.webp"
+            srcSet="/images/contextual/family-outdoors-480.webp 480w, /images/contextual/family-outdoors.webp 1024w"
+            sizes="(max-width: 640px) 88px, 128px"
+            width={1024}
+            height={683}
+            alt=""
+            className="dashboard-family-card__photo"
+          />
+          <div className="dashboard-family-card__copy">
+            <div className="dashboard-family-card__heading"><h2>Family care</h2><PremiumBadge /></div>
+            <p>Premium adds room for managed records and connected adults. Your existing records stay available.</p>
+          </div>
+          <span className="dashboard-family-card__action">Open family care <span aria-hidden="true">&rarr;</span></span>
+        </Link>
       </div>
 
-      {/* Today's tasks */}
+      {/* Today's care */}
         <div className="animate-fade-up delay-200" style={{ marginBottom: '2rem' }}>
 
           <div style={{
@@ -379,7 +398,7 @@ export function DashboardPage() {
               letterSpacing: '0.05em',
               textTransform: 'uppercase'
             }}>
-              Today's tasks
+              Today's care
             </p>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -411,7 +430,7 @@ export function DashboardPage() {
               <EmptyState
                 icon="check_circle"
                 title="All caught up!"
-                description="No tasks scheduled for today. Great work."
+                description="No care activities scheduled for today."
               />
             </Card>
           ) : (
@@ -471,7 +490,7 @@ export function DashboardPage() {
           <p style={{ fontFamily: 'var(--font-headline)', fontWeight: 700, fontSize: '0.8125rem', color: 'var(--on-surface-variant)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: '1rem' }}>AI today</p>
           {data?.usageSummary && [
               { label: 'Symptom checks', used: data.usageSummary.symptomChecksUsed, limit: data.usageSummary.symptomChecksLimit },
-              { label: 'Drug scans', used: data.usageSummary.drugDetectionsUsed, limit: data.usageSummary.drugDetectionsLimit },
+              { label: 'Drug information', used: data.usageSummary.drugDetectionsUsed, limit: data.usageSummary.drugDetectionsLimit },
           ].map(({ label, used, limit }) => (
             <div key={label} style={{ marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
