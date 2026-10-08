@@ -3,7 +3,12 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Keep production API requests on the app origin through Vercel's /api proxy.
+  // A hosting environment override must not move OAuth cookies to the API host.
+  define: mode === 'production'
+    ? { 'import.meta.env.VITE_API_URL': JSON.stringify('') }
+    : undefined,
   plugins: [
     react(),
     VitePWA({
@@ -69,4 +74,4 @@ export default defineConfig({
     })
   ],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } }
-})
+}))
